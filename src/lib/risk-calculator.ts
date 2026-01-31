@@ -236,6 +236,183 @@ export function calculateAverageRateForLastNDays<T extends { date: string; rate:
   return sum / dailyRates.length
 }
 
+/**
+ * Expand observations to daily rate data points.
+ * Each day from the earliest to latest observation gets a data point with the rate
+ * from the observation that covers it. This allows charts to show continuous daily
+ * rates rather than discrete observation events.
+ *
+ * @param observations - Observations with date, count, rate, and daysSincePrevious
+ * @returns Daily data points with rate for each day
+ */
+export function expandObservationsToDailyRates<
+  T extends {
+    date: string
+    rate: number | null
+    daysSincePrevious: number | null
+    count: number
+  },
+>(observations: T[]): Array<{
+  date: string
+  timestamp: number
+  rate: number
+  count: number
+  daysSincePrevious: number | null
+  isObservationDay: boolean
+}> {
+  if (observations.length === 0) return []
+
+  // Sort by date ascending (oldest first)
+  const sorted = [...observations].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  )
+
+  // Find date range
+  const dates = sorted.map((obs) => new Date(obs.date))
+  const minDate = new Date(Math.min(...dates.map((d) => d.getTime())))
+  const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())))
+  minDate.setHours(0, 0, 0, 0)
+  maxDate.setHours(0, 0, 0, 0)
+
+  const dailyData: Array<{
+    date: string
+    timestamp: number
+    rate: number
+    count: number
+    daysSincePrevious: number | null
+    isObservationDay: boolean
+  }> = []
+
+  // Track which dates have actual observations
+  const observationDates = new Set(
+    sorted.map((obs) => {
+      const d = new Date(obs.date)
+      d.setHours(0, 0, 0, 0)
+      return d.getTime()
+    }),
+  )
+
+  // For each day in the range, find the observation that covers it
+  const currentDay = new Date(minDate)
+  while (currentDay <= maxDate) {
+    const currentDayTime = currentDay.getTime()
+    const currentDayStr = currentDay.toISOString().split('T')[0]
+
+    // Find the observation that covers this day
+    // An observation covers a day if the day falls within:
+    // (previous observation date + 1) to (this observation date)
+    let coveringObs: T | null = null
+
+    for (let i = 0; i < sorted.length; i++) {
+      const obs = sorted[i]
+      if (obs.rate === null || obs.rate === undefined) continue
+
+      const obsDate = new Date(obs.date)
+      obsDate.setHours(0, 0, 0, 0)
+      const obsDateTime = obsDate.getTime()
+
+      // Skip if observation date is before current day
+      if (obsDateTime < currentDayTime) continue
+
+      // Determine coverage period for this observation
+      let coverageStartTime: number
+      if (i === 0) {
+        // First observation covers from its own date (or minDate if before)
+        coverageStartTime = Math.min(obsDateTime, minDate.getTime())
+      } else {
+        // Coverage starts the day after the previous observation
+        const prevObs = sorted[i - 1]
+        const prevObsDate = new Date(prevObs.date)
+        prevObsDate.setHours(0, 0, 0, 0)
+        coverageStartTime = prevObsDate.getTime() + 24 * 60 * 60 * 1000 // +1 day
+        coverageStartTime = Math.max(coverageStartTime, minDate.getTime())
+      }
+
+      // Check if current day falls within this observation's coverage period
+      if (currentDayTime >= coverageStartTime && currentDayTime <= obsDateTime) {
+        coveringObs = obs
+        break
+      }
+    }
+
+    // Add data point for this day
+    if (coveringObs && coveringObs.rate !== null) {
+      dailyData.push({
+        date: currentDayStr,
+        timestamp: currentDayTime,
+        rate: coveringObs.rate,
+        count: coveringObs.count,
+        daysSincePrevious: coveringObs.daysSincePrevious,
+        isObservationDay: observationDates.has(currentDayTime),
+      })
+    } else {
+      // No observation covers this day - use 0 rate
+      dailyData.push({
+        date: currentDayStr,
+        timestamp: currentDayTime,
+        rate: 0,
+        count: 0,
+        daysSincePrevious: null,
+        isObservationDay: observationDates.has(currentDayTime),
+      })
+    }
+
+    // Move to next day
+    currentDay.setDate(currentDay.getDate() + 1)
+  }
+
+  return dailyData
+}
+
+/**
+ * Aggregate observations by date, summing counts for same-day observations.
+ * This is useful for displaying charts where multiple observations on the same day
+ * should be shown as a single point with combined counts.
+ *
+ * @param observations - Observations with date, count, rate, and daysSincePrevious
+ * @returns Aggregated observations (one per date)
+ */
+export function aggregateObservationsByDate<
+  T extends { date: string; count: number; rate: number | null; daysSincePrevious: number | null },
+>(observations: T[]): T[] {
+  if (observations.length === 0) return []
+
+  // Group observations by date (YYYY-MM-DD)
+  const byDate = new Map<string, T[]>()
+
+  for (const obs of observations) {
+    // Extract date part (YYYY-MM-DD) from ISO string
+    const dateKey = obs.date.split('T')[0]
+    const existing = byDate.get(dateKey) || []
+    existing.push(obs)
+    byDate.set(dateKey, existing)
+  }
+
+  // Aggregate each date group
+  return Array.from(byDate.entries()).map(([dateKey, obsGroup]) => {
+    // If only one observation for this date, return it as-is
+    if (obsGroup.length === 1) {
+      return obsGroup[0]
+    }
+
+    // Multiple observations on same day: sum counts and recalculate rate
+    const totalCount = obsGroup.reduce((sum, o) => sum + o.count, 0)
+
+    // Use the first observation as the base (preserves other fields like id, trap, etc.)
+    const first = obsGroup[0]
+
+    // Recalculate rate: if we have daysSincePrevious, use it; otherwise use 1 day
+    const days = first.daysSincePrevious ?? 1
+    const newRate = totalCount / days
+
+    return {
+      ...first,
+      count: totalCount,
+      rate: newRate,
+    } as T
+  })
+}
+
 // Legacy function - kept for backwards compatibility during migration
 export interface RiskCalculation {
   level: RiskLevel

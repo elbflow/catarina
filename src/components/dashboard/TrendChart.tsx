@@ -12,6 +12,7 @@ import {
   Dot,
 } from 'recharts'
 import type { ObservationWithRelationsAndRate } from '@/lib/payload-client'
+import { expandObservationsToDailyRates } from '@/lib/risk-calculator'
 
 // Fixed thresholds for risk levels
 const DANGER_THRESHOLD = 2
@@ -26,21 +27,26 @@ export function TrendChart({ observations }: TrendChartProps) {
     .filter((obs) => obs.rate !== null)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
+  // Expand observations to daily rate data points
+  // Each day gets the rate from the observation that covers it
+  const dailyData = expandObservationsToDailyRates(sorted)
+
   // Format data for chart with timestamp for proper time scaling
-  const chartData = sorted.map((obs) => {
-    const rate = obs.rate ?? 0
+  const chartData = dailyData.map((day) => {
+    const rate = day.rate
 
     let severity: 'safe' | 'warning' | 'danger' = 'safe'
     if (rate > 2) severity = 'danger'
     else if (rate >= 1) severity = 'warning'
 
     return {
-      timestamp: new Date(obs.date).getTime(),
-      date: obs.date,
+      timestamp: day.timestamp,
+      date: day.date,
       rate,
-      count: obs.count,
-      days: obs.daysSincePrevious,
+      count: day.count,
+      days: day.daysSincePrevious,
       severity,
+      isObservationDay: day.isObservationDay,
     }
   })
 
@@ -56,20 +62,38 @@ export function TrendChart({ observations }: TrendChartProps) {
   }
 
   // Custom dot component that colors based on severity
+  // Observation days get solid dots, interpolated days get smaller hollow dots
   const CustomDot = (props: { cx?: number; cy?: number; payload?: (typeof chartData)[number] }) => {
     const { cx, cy, payload } = props
     if (!cx || !cy || !payload) return null
 
-    return (
-      <Dot
-        cx={cx}
-        cy={cy}
-        r={5}
-        fill={getDotColor(payload.severity)}
-        stroke="white"
-        strokeWidth={2}
-      />
-    )
+    const isObservationDay = payload.isObservationDay ?? false
+
+    if (isObservationDay) {
+      // Solid dot for actual observation days
+      return (
+        <Dot
+          cx={cx}
+          cy={cy}
+          r={5}
+          fill={getDotColor(payload.severity)}
+          stroke="white"
+          strokeWidth={2}
+        />
+      )
+    } else {
+      // Smaller hollow dot for interpolated days
+      return (
+        <Dot
+          cx={cx}
+          cy={cy}
+          r={3}
+          fill="transparent"
+          stroke={getDotColor(payload.severity)}
+          strokeWidth={1.5}
+        />
+      )
+    }
   }
 
   // Format timestamp to readable date
@@ -124,13 +148,20 @@ export function TrendChart({ observations }: TrendChartProps) {
             content={({ active, payload }) => {
               if (active && payload && payload.length > 0) {
                 const item = payload[0].payload as (typeof chartData)[number]
+                const isObservationDay = item.isObservationDay ?? false
                 return (
                   <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
                     <p className="font-medium text-gray-700 mb-1">{formatDate(item.timestamp)}</p>
                     <p className="text-lg font-bold text-gray-900">{item.rate.toFixed(1)}/day</p>
-                    <p className="text-sm text-gray-500">
-                      +{item.count} insects in {item.days?.toFixed(0)} days
-                    </p>
+                    {isObservationDay ? (
+                      <p className="text-sm text-gray-500">
+                        +{item.count} insects in {item.days?.toFixed(0) ?? '?'} days
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">
+                        Interpolated rate (no observation on this day)
+                      </p>
+                    )}
                   </div>
                 )
               }

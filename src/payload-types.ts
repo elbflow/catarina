@@ -73,6 +73,8 @@ export interface Config {
     traps: Trap;
     'pest-types': PestType;
     'pest-observations': PestObservation;
+    coops: Coop;
+    'coop-memberships': CoopMembership;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +88,8 @@ export interface Config {
     traps: TrapsSelect<false> | TrapsSelect<true>;
     'pest-types': PestTypesSelect<false> | PestTypesSelect<true>;
     'pest-observations': PestObservationsSelect<false> | PestObservationsSelect<true>;
+    coops: CoopsSelect<false> | CoopsSelect<true>;
+    'coop-memberships': CoopMembershipsSelect<false> | CoopMembershipsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -130,6 +134,18 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  name?: string | null;
+  role: 'farmer' | 'technician';
+  /**
+   * Grants full system access. Only modify via direct DB access.
+   */
+  isSuperAdmin?: boolean | null;
+  tenants?:
+    | {
+        tenant: number | Farm;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -150,25 +166,6 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "farms".
  */
 export interface Farm {
@@ -178,6 +175,10 @@ export interface Farm {
    * The pest type being monitored at this farm
    */
   pestType: number | PestType;
+  /**
+   * Join a co-op to share aggregated metrics with other farmers
+   */
+  coop?: (number | null) | Coop;
   /**
    * Optional location for future use
    */
@@ -206,10 +207,44 @@ export interface PestType {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coops".
+ */
+export interface Coop {
+  id: number;
+  name: string;
+  /**
+   * Geographic region this co-op covers
+   */
+  region?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "traps".
  */
 export interface Trap {
   id: number;
+  tenant?: (number | null) | Farm;
   name: string;
   farm: number | Farm;
   /**
@@ -225,6 +260,7 @@ export interface Trap {
  */
 export interface PestObservation {
   id: number;
+  tenant?: (number | null) | Farm;
   date: string;
   /**
    * Additional insects caught since last observation
@@ -243,6 +279,19 @@ export interface PestObservation {
    * Optional photo of the trap (for V4 AI feature)
    */
   photo?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coop-memberships".
+ */
+export interface CoopMembership {
+  id: number;
+  user: number | User;
+  coop: number | Coop;
+  status: 'pending' | 'active';
+  memberRole: 'member' | 'admin';
   updatedAt: string;
   createdAt: string;
 }
@@ -293,6 +342,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pest-observations';
         value: number | PestObservation;
+      } | null)
+    | ({
+        relationTo: 'coops';
+        value: number | Coop;
+      } | null)
+    | ({
+        relationTo: 'coop-memberships';
+        value: number | CoopMembership;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -341,6 +398,15 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  role?: T;
+  isSuperAdmin?: T;
+  tenants?:
+    | T
+    | {
+        tenant?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -383,6 +449,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface FarmsSelect<T extends boolean = true> {
   name?: T;
   pestType?: T;
+  coop?: T;
   location?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -392,6 +459,7 @@ export interface FarmsSelect<T extends boolean = true> {
  * via the `definition` "traps_select".
  */
 export interface TrapsSelect<T extends boolean = true> {
+  tenant?: T;
   name?: T;
   farm?: T;
   isActive?: T;
@@ -415,12 +483,35 @@ export interface PestTypesSelect<T extends boolean = true> {
  * via the `definition` "pest-observations_select".
  */
 export interface PestObservationsSelect<T extends boolean = true> {
+  tenant?: T;
   date?: T;
   count?: T;
   isBaseline?: T;
   trap?: T;
   notes?: T;
   photo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coops_select".
+ */
+export interface CoopsSelect<T extends boolean = true> {
+  name?: T;
+  region?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coop-memberships_select".
+ */
+export interface CoopMembershipsSelect<T extends boolean = true> {
+  user?: T;
+  coop?: T;
+  status?: T;
+  memberRole?: T;
   updatedAt?: T;
   createdAt?: T;
 }

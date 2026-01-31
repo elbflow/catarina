@@ -41,10 +41,19 @@ export function ObservationForm({
     setError(null)
 
     try {
+      // Get farm ID from selected trap
+      const selectedTrap = traps.find((t) => String(t.id) === formData.trap)
+      const farmId = selectedTrap?.farm
+        ? typeof selectedTrap.farm === 'object'
+          ? String(selectedTrap.farm.id)
+          : String(selectedTrap.farm)
+        : ''
+
       await createObservation({
         date: formData.date,
         count: parseInt(formData.count, 10),
         trap: formData.trap,
+        farm: farmId,
         notes: formData.notes || undefined,
       })
 

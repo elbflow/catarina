@@ -5,6 +5,7 @@ export interface CreateObservationData {
   date: string
   count: number
   trap: string
+  farm: string // Tenant ID for multi-tenant plugin
   notes?: string
 }
 
@@ -15,6 +16,7 @@ export async function createObservation(data: CreateObservationData) {
     date: data.date,
     count: data.count,
     trap: parseInt(data.trap, 10),
+    tenant: parseInt(data.farm, 10), // Required by multi-tenant plugin
     notes: data.notes,
   }
 
@@ -23,6 +25,7 @@ export async function createObservation(data: CreateObservationData) {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include', // Include auth cookies
     body: JSON.stringify(payload),
   })
 
@@ -42,9 +45,11 @@ export interface CreateTrapData {
 export async function createTrap(data: CreateTrapData) {
   const apiUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
+  const farmId = parseInt(data.farm, 10)
   const payload = {
     name: data.name,
-    farm: parseInt(data.farm, 10),
+    farm: farmId,
+    tenant: farmId, // Required by multi-tenant plugin
     isActive: true,
   }
 
@@ -53,6 +58,7 @@ export async function createTrap(data: CreateTrapData) {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include', // Include auth cookies
     body: JSON.stringify(payload),
   })
 

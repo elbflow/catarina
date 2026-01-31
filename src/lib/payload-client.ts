@@ -1,4 +1,4 @@
-import type { Farm, PestObservation, PestType, Trap } from '@/payload-types'
+import type { Farm, PestObservation, PestType, Trap, User } from '@/payload-types'
 import config from '@/payload.config'
 import { getPayload, type Where } from 'payload'
 import { calculateObservationRates, type ObservationWithRate } from './risk-calculator'
@@ -21,7 +21,10 @@ export interface ObservationWithRelationsAndRate extends ObservationWithRelation
 /**
  * Get all traps for a farm.
  */
-export async function getTraps(farmId?: string | number): Promise<TrapWithRelations[]> {
+export async function getTraps(
+  user: User | null,
+  farmId?: string | number,
+): Promise<TrapWithRelations[]> {
   const payload = await getPayload({ config })
 
   const where: Where = farmId ? { farm: { equals: farmId } } : {}
@@ -31,6 +34,8 @@ export async function getTraps(farmId?: string | number): Promise<TrapWithRelati
     where,
     depth: 2,
     sort: 'name',
+    user,
+    overrideAccess: false,
   })
 
   return result.docs as TrapWithRelations[]
@@ -39,22 +44,27 @@ export async function getTraps(farmId?: string | number): Promise<TrapWithRelati
 /**
  * Get a single trap by ID.
  */
-export async function getTrap(id: string | number): Promise<TrapWithRelations> {
+export async function getTrap(id: string | number, user: User | null): Promise<TrapWithRelations> {
   const payload = await getPayload({ config })
   return await payload.findByID({
     collection: 'traps',
     id,
     depth: 2,
+    user,
+    overrideAccess: false,
   }) as TrapWithRelations
 }
 
 /**
  * Create a new trap. Baseline observation is created via afterChange hook.
  */
-export async function createTrap(data: {
-  name: string
-  farm: number | string
-}): Promise<Trap> {
+export async function createTrap(
+  data: {
+    name: string
+    farm: number | string
+  },
+  user: User | null,
+): Promise<Trap> {
   const payload = await getPayload({ config })
 
   return await payload.create({
@@ -64,13 +74,18 @@ export async function createTrap(data: {
       farm: typeof data.farm === 'string' ? parseInt(data.farm, 10) : data.farm,
       isActive: true,
     },
+    user,
+    overrideAccess: false,
   })
 }
 
 /**
  * Get active traps for a farm.
  */
-export async function getActiveTraps(farmId: string | number): Promise<TrapWithRelations[]> {
+export async function getActiveTraps(
+  farmId: string | number,
+  user: User | null,
+): Promise<TrapWithRelations[]> {
   const payload = await getPayload({ config })
 
   const result = await payload.find({
@@ -83,6 +98,8 @@ export async function getActiveTraps(farmId: string | number): Promise<TrapWithR
     },
     depth: 2,
     sort: 'name',
+    user,
+    overrideAccess: false,
   })
 
   return result.docs as TrapWithRelations[]
@@ -93,7 +110,10 @@ export async function getActiveTraps(farmId: string | number): Promise<TrapWithR
 /**
  * Get observations for a specific trap.
  */
-export async function getObservationsForTrap(trapId: string | number): Promise<ObservationWithRelations[]> {
+export async function getObservationsForTrap(
+  trapId: string | number,
+  user: User | null,
+): Promise<ObservationWithRelations[]> {
   const payload = await getPayload({ config })
 
   const result = await payload.find({
@@ -101,6 +121,8 @@ export async function getObservationsForTrap(trapId: string | number): Promise<O
     where: { trap: { equals: trapId } },
     depth: 3,
     sort: '-date',
+    user,
+    overrideAccess: false,
   })
 
   return result.docs as ObservationWithRelations[]
@@ -109,7 +131,10 @@ export async function getObservationsForTrap(trapId: string | number): Promise<O
 /**
  * Get all observations for a farm (from all traps).
  */
-export async function getObservationsForFarm(farmId: string | number): Promise<ObservationWithRelations[]> {
+export async function getObservationsForFarm(
+  farmId: string | number,
+  user: User | null,
+): Promise<ObservationWithRelations[]> {
   const payload = await getPayload({ config })
 
   // First get all trap IDs for this farm
@@ -117,13 +142,19 @@ export async function getObservationsForFarm(farmId: string | number): Promise<O
     collection: 'traps',
     where: { farm: { equals: farmId } },
     depth: 0,
+    user,
+    overrideAccess: false,
   })
 
   if (traps.docs.length === 0) {
     return []
   }
 
-  const trapIds = traps.docs.map((t) => t.id)
+  const trapIds = traps.docs.map((t) => t.id).filter((id) => id != null)
+
+  if (trapIds.length === 0) {
+    return []
+  }
 
   // Get all observations for these traps
   const result = await payload.find({
@@ -134,6 +165,8 @@ export async function getObservationsForFarm(farmId: string | number): Promise<O
     depth: 3,
     sort: '-date',
     limit: 1000,
+    user,
+    overrideAccess: false,
   })
 
   return result.docs as ObservationWithRelations[]
@@ -144,8 +177,9 @@ export async function getObservationsForFarm(farmId: string | number): Promise<O
  */
 export async function getObservationsWithRatesForTrap(
   trapId: string | number,
+  user: User | null,
 ): Promise<ObservationWithRelationsAndRate[]> {
-  const observations = await getObservationsForTrap(trapId)
+  const observations = await getObservationsForTrap(trapId, user)
   return enrichObservationsWithRates(observations)
 }
 
@@ -154,8 +188,9 @@ export async function getObservationsWithRatesForTrap(
  */
 export async function getObservationsWithRatesForFarm(
   farmId: string | number,
+  user: User | null,
 ): Promise<ObservationWithRelationsAndRate[]> {
-  const observations = await getObservationsForFarm(farmId)
+  const observations = await getObservationsForFarm(farmId, user)
   return enrichObservationsWithRates(observations)
 }
 
@@ -163,8 +198,11 @@ export async function getObservationsWithRatesForFarm(
  * Calculate rates for each trap and return the average across active traps.
  * This is the farm-level aggregated rate.
  */
-export async function getAggregatedFarmRate(farmId: string | number): Promise<number> {
-  const traps = await getActiveTraps(farmId)
+export async function getAggregatedFarmRate(
+  farmId: string | number,
+  user: User | null,
+): Promise<number> {
+  const traps = await getActiveTraps(farmId, user)
 
   if (traps.length === 0) {
     return 0
@@ -173,7 +211,7 @@ export async function getAggregatedFarmRate(farmId: string | number): Promise<nu
   const trapRates: number[] = []
 
   for (const trap of traps) {
-    const observations = await getObservationsWithRatesForTrap(trap.id)
+    const observations = await getObservationsWithRatesForTrap(trap.id, user)
     // Find most recent rate for this trap
     const mostRecentRate = observations.find((obs) => obs.rate !== null)?.rate
     if (mostRecentRate !== undefined && mostRecentRate !== null) {
@@ -192,13 +230,16 @@ export async function getAggregatedFarmRate(farmId: string | number): Promise<nu
 /**
  * Get rate info for each trap in a farm.
  */
-export async function getTrapRates(farmId: string | number): Promise<Array<{
+export async function getTrapRates(
+  farmId: string | number,
+  user: User | null,
+): Promise<Array<{
   trap: TrapWithRelations
   rate: number | null
   observationCount: number
   lastObservationDate: string | null
 }>> {
-  const traps = await getTraps(farmId)
+  const traps = await getTraps(user, farmId)
   const results: Array<{
     trap: TrapWithRelations
     rate: number | null
@@ -207,7 +248,7 @@ export async function getTrapRates(farmId: string | number): Promise<Array<{
   }> = []
 
   for (const trap of traps) {
-    const observations = await getObservationsWithRatesForTrap(trap.id)
+    const observations = await getObservationsWithRatesForTrap(trap.id, user)
     const mostRecentWithRate = observations.find((obs) => obs.rate !== null)
 
     results.push({
@@ -269,13 +310,16 @@ function enrichObservationsWithRates(
 /**
  * Create an observation for a trap.
  */
-export async function createObservation(data: {
-  date: string
-  count: number
-  trap: number | string
-  notes?: string
-  isBaseline?: boolean
-}): Promise<PestObservation> {
+export async function createObservation(
+  data: {
+    date: string
+    count: number
+    trap: number | string
+    notes?: string
+    isBaseline?: boolean
+  },
+  user: User | null,
+): Promise<PestObservation> {
   const payload = await getPayload({ config })
 
   return await payload.create({
@@ -287,16 +331,21 @@ export async function createObservation(data: {
       notes: data.notes,
       isBaseline: data.isBaseline ?? false,
     },
+    user,
+    overrideAccess: false,
   })
 }
 
 /**
  * Create a baseline observation for a trap.
  */
-export async function createBaselineObservation(data: {
-  trap: number
-  date?: string
-}): Promise<PestObservation> {
+export async function createBaselineObservation(
+  data: {
+    trap: number
+    date?: string
+  },
+  user: User | null,
+): Promise<PestObservation> {
   const payload = await getPayload({ config })
 
   return await payload.create({
@@ -308,25 +357,36 @@ export async function createBaselineObservation(data: {
       isBaseline: true,
       notes: 'Trap set up - starting point for rate calculations',
     },
+    user,
+    overrideAccess: false,
   })
 }
 
 // ============ FARM FUNCTIONS ============
 
-export async function getFarm(id: string | number): Promise<Farm & { pestType: PestType }> {
+export async function getFarm(
+  id: string | number,
+  user: User | null,
+): Promise<Farm & { pestType: PestType }> {
   const payload = await getPayload({ config })
   return await payload.findByID({
     collection: 'farms',
     id,
     depth: 1,
+    user,
+    overrideAccess: false,
   }) as Farm & { pestType: PestType }
 }
 
-export async function getFarms(): Promise<Array<Farm & { pestType: PestType }>> {
+export async function getFarms(
+  user: User | null,
+): Promise<Array<Farm & { pestType: PestType }>> {
   const payload = await getPayload({ config })
   const result = await payload.find({
     collection: 'farms',
     depth: 1,
+    user,
+    overrideAccess: false,
   })
   return result.docs as Array<Farm & { pestType: PestType }>
 }
@@ -356,6 +416,7 @@ export async function getPestTypes(): Promise<PestType[]> {
  */
 export async function getLatestObservation(
   trapId: string | number,
+  user: User | null,
 ): Promise<ObservationWithRelations | null> {
   const payload = await getPayload({ config })
 
@@ -367,6 +428,8 @@ export async function getLatestObservation(
     depth: 3,
     sort: '-date',
     limit: 1,
+    user,
+    overrideAccess: false,
   })
 
   return result.docs.length > 0 ? (result.docs[0] as ObservationWithRelations) : null
@@ -375,8 +438,11 @@ export async function getLatestObservation(
 /**
  * Get the latest calculated rate for a specific trap.
  */
-export async function getLatestRateForTrap(trapId: string | number): Promise<number> {
-  const observations = await getObservationsWithRatesForTrap(trapId)
+export async function getLatestRateForTrap(
+  trapId: string | number,
+  user: User | null,
+): Promise<number> {
+  const observations = await getObservationsWithRatesForTrap(trapId, user)
   const mostRecentWithRate = observations.find((obs) => obs.rate !== null)
   return mostRecentWithRate?.rate ?? 0
 }

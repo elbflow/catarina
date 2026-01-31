@@ -1,3 +1,4 @@
+import { isAuthenticated, isSuperAdmin } from '@/access'
 import type { CollectionConfig } from 'payload'
 
 export const PestTypes: CollectionConfig = {
@@ -7,10 +8,12 @@ export const PestTypes: CollectionConfig = {
     defaultColumns: ['name', 'crop', 'rateThreshold', 'createdAt'],
   },
   access: {
-    read: () => true, // Public read for V1
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    // Anyone authenticated can read pest types (for onboarding dropdown)
+    read: isAuthenticated,
+    // Only superadmins can manage pest types
+    create: isSuperAdmin,
+    update: isSuperAdmin,
+    delete: isSuperAdmin,
   },
   fields: [
     {

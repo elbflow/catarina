@@ -1,3 +1,4 @@
+import { getUser } from '@/access'
 import type { CollectionConfig } from 'payload'
 
 export const PestObservations: CollectionConfig = {
@@ -7,10 +8,30 @@ export const PestObservations: CollectionConfig = {
     defaultColumns: ['date', 'count', 'isBaseline', 'trap', 'createdAt'],
   },
   access: {
-    read: () => true,
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    // Plugin handles tenant filtering
+    read: ({ req }) => {
+      const user = getUser(req)
+      if (!user) return false
+      if (user.isSuperAdmin) return true
+      return true // Plugin filters by tenant
+    },
+    // Farmers and technicians can create observations
+    create: ({ req }) => {
+      const user = getUser(req)
+      if (!user) return false
+      if (user.isSuperAdmin) return true
+      return ['farmer', 'technician'].includes(user.role)
+    },
+    // Only superadmins can update (observations are generally immutable)
+    update: ({ req }) => {
+      const user = getUser(req)
+      return user?.isSuperAdmin === true
+    },
+    // Only superadmins can delete
+    delete: ({ req }) => {
+      const user = getUser(req)
+      return user?.isSuperAdmin === true
+    },
   },
   fields: [
     {

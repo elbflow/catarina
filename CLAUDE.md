@@ -38,10 +38,15 @@ pnpm generate:importmap  # Regenerate component import map after adding componen
 - E2E tests: `tests/e2e/**/*.spec.ts`
 
 ### Seed Demo Data
-```bash
-curl -X POST http://localhost:3000/api/seed
-# Or GET http://localhost:3000/api/seed in browser
-```
+Demo users and data are **not** created by migrations. After `payload migrate:fresh` (or a fresh DB), run the seed so logins work:
+
+1. Start the dev server: `pnpm dev`
+2. In another terminal: `pnpm seed` — or visit `http://localhost:3000/api/seed` or run:
+   ```bash
+   curl -X POST http://localhost:3000/api/seed
+   ```
+
+Demo accounts: admin@elbflow.com / catarina2026! (superadmin); all others use password demo1234!. Full reference (users, farms, traps, risk levels): [docs/demo-data.md](docs/demo-data.md). Implementation: `src/lib/demo-data.ts`.
 
 ## Architecture
 

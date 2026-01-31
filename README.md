@@ -60,16 +60,19 @@ IPM Scout-to-Action helps growers understand what's happening in their fields an
 
 ### Seeding Demo Data
 
-To seed the demo data programmatically:
+**Important:** Demo users and data are **not** created by `payload migrate:fresh`. After resetting the DB with `pnpm payload migrate:fresh`, you must run the seed or the demo logins will not work.
+
+With the dev server running (`pnpm dev`):
 
 ```bash
-curl -X POST http://localhost:3000/api/seed
+pnpm seed
+# or: curl -X POST http://localhost:3000/api/seed
+# or visit http://localhost:3000/api/seed in the browser
 ```
 
-This will create:
-- 1 Farm: "Apple Orchard Demo"
-- 1 Pest Type: "Codling Moth" (threshold: 5)
-- 30 observations over the last 30 days showing a realistic trend
+This creates demo users, co-op, farms, pest types, traps, and observations.
+
+**Demo data reference:** See [docs/demo-data.md](docs/demo-data.md) for login credentials, which user sees which farm, trap names, and mid-season risk levels.
 
 ## Project Structure
 

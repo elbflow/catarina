@@ -120,13 +120,6 @@ export function TrendChart({ observations, rateThreshold }: TrendChartProps) {
             }}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            }}
-            labelFormatter={formatDate}
             content={({ active, payload }) => {
               if (active && payload && payload.length > 0) {
                 const item = payload[0].payload as (typeof chartData)[number]

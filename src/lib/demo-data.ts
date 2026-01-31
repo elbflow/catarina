@@ -2,6 +2,109 @@ import config from '@/payload.config'
 import { getPayload } from 'payload'
 
 /**
+ * Flush all data from the database.
+ * Deletes in reverse dependency order to avoid foreign key issues.
+ */
+export async function flushDatabase() {
+  const payload = await getPayload({ config })
+
+  console.log('Flushing database...')
+
+  // Delete observations first (depends on traps)
+  const observations = await payload.find({
+    collection: 'pest-observations',
+    limit: 10000,
+  })
+  for (const obs of observations.docs) {
+    await payload.delete({
+      collection: 'pest-observations',
+      id: obs.id,
+    })
+  }
+  console.log(`Deleted ${observations.totalDocs} observations`)
+
+  // Delete traps (depends on farms)
+  const traps = await payload.find({
+    collection: 'traps',
+    limit: 10000,
+  })
+  for (const trap of traps.docs) {
+    await payload.delete({
+      collection: 'traps',
+      id: trap.id,
+    })
+  }
+  console.log(`Deleted ${traps.totalDocs} traps`)
+
+  // Delete coop memberships (depends on users and coops)
+  const memberships = await payload.find({
+    collection: 'coop-memberships',
+    limit: 10000,
+  })
+  for (const membership of memberships.docs) {
+    await payload.delete({
+      collection: 'coop-memberships',
+      id: membership.id,
+    })
+  }
+  console.log(`Deleted ${memberships.totalDocs} coop memberships`)
+
+  // Delete farms (depends on pest types and coops)
+  const farms = await payload.find({
+    collection: 'farms',
+    limit: 10000,
+  })
+  for (const farm of farms.docs) {
+    await payload.delete({
+      collection: 'farms',
+      id: farm.id,
+    })
+  }
+  console.log(`Deleted ${farms.totalDocs} farms`)
+
+  // Delete coops
+  const coops = await payload.find({
+    collection: 'coops',
+    limit: 10000,
+  })
+  for (const coop of coops.docs) {
+    await payload.delete({
+      collection: 'coops',
+      id: coop.id,
+    })
+  }
+  console.log(`Deleted ${coops.totalDocs} coops`)
+
+  // Delete pest types
+  const pestTypes = await payload.find({
+    collection: 'pest-types',
+    limit: 10000,
+  })
+  for (const pestType of pestTypes.docs) {
+    await payload.delete({
+      collection: 'pest-types',
+      id: pestType.id,
+    })
+  }
+  console.log(`Deleted ${pestTypes.totalDocs} pest types`)
+
+  // Delete users
+  const users = await payload.find({
+    collection: 'users',
+    limit: 10000,
+  })
+  for (const user of users.docs) {
+    await payload.delete({
+      collection: 'users',
+      id: user.id,
+    })
+  }
+  console.log(`Deleted ${users.totalDocs} users`)
+
+  console.log('Database flushed successfully')
+}
+
+/**
  * Realistic demo data for a mid-season pest monitoring scenario.
  * 
  * Co-op: Yakima Valley Apple Growers Co-op
@@ -10,16 +113,14 @@ import { getPayload } from 'payload'
  * 
  * This simulates approximately 6 weeks of monitoring data, representing
  * mid-season conditions with varied activity levels across farms.
+ * 
+ * NOTE: This function flushes the database first, then seeds fresh data.
  */
 export async function seedDemoData() {
-  const payload = await getPayload({ config })
+  // Flush existing data first
+  await flushDatabase()
 
-  // Check if data already exists
-  const existingFarms = await payload.find({ collection: 'farms', limit: 1 })
-  if (existingFarms.totalDocs > 0) {
-    console.log('Demo data already exists, skipping seed')
-    return
-  }
+  const payload = await getPayload({ config })
 
   // ============ USERS ============
 
@@ -399,18 +500,45 @@ export async function seedDemoData() {
     for (const obs of observations) {
       const date = new Date(today)
       date.setDate(date.getDate() - obs.daysAgo)
+      const dateStr = date.toISOString().split('T')[0]
 
-      await payload.create({
+      // Check if observation already exists for this trap/date
+      const existing = await payload.find({
         collection: 'pest-observations',
-        data: {
-          date: date.toISOString().split('T')[0],
-          count: obs.count,
-          trap: trapId,
-          tenant: farmId,
-          isBaseline: false,
-          notes: obs.notes,
+        where: {
+          and: [
+            { trap: { equals: trapId } },
+            { date: { equals: dateStr } },
+          ],
         },
+        limit: 1,
       })
+
+      if (existing.docs.length > 0) {
+        // Update existing observation (likely a baseline observation)
+        await payload.update({
+          collection: 'pest-observations',
+          id: existing.docs[0].id,
+          data: {
+            count: obs.count,
+            isBaseline: false,
+            notes: obs.notes,
+          },
+        })
+      } else {
+        // Create new observation
+        await payload.create({
+          collection: 'pest-observations',
+          data: {
+            date: dateStr,
+            count: obs.count,
+            trap: trapId,
+            tenant: farmId,
+            isBaseline: false,
+            notes: obs.notes,
+          },
+        })
+      }
     }
   }
 

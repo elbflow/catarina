@@ -1,7 +1,11 @@
 import type { Farm, PestObservation, PestType, Trap, User } from '@/payload-types'
 import config from '@/payload.config'
 import { getPayload, type Where } from 'payload'
-import { calculateObservationRates, type ObservationWithRate } from './risk-calculator'
+import {
+  calculateObservationRates,
+  calculateAverageRateForLastNDays,
+  type ObservationWithRate,
+} from './risk-calculator'
 
 export interface TrapWithRelations extends Trap {
   farm: Farm
@@ -197,6 +201,9 @@ export async function getObservationsWithRatesForFarm(
 /**
  * Calculate rates for each trap and return the average across active traps.
  * This is the farm-level aggregated rate.
+ * 
+ * For each trap, calculates the 3-day average rate, then averages those trap rates.
+ * This provides a farm-level view that accounts for time gaps between observations.
  */
 export async function getAggregatedFarmRate(
   farmId: string | number,
@@ -212,10 +219,10 @@ export async function getAggregatedFarmRate(
 
   for (const trap of traps) {
     const observations = await getObservationsWithRatesForTrap(trap.id, user)
-    // Find most recent rate for this trap
-    const mostRecentRate = observations.find((obs) => obs.rate !== null)?.rate
-    if (mostRecentRate !== undefined && mostRecentRate !== null) {
-      trapRates.push(mostRecentRate)
+    // Calculate 3-day average rate for this trap
+    const trapAverageRate = calculateAverageRateForLastNDays(observations, 3)
+    if (trapAverageRate > 0) {
+      trapRates.push(trapAverageRate)
     }
   }
 
@@ -223,7 +230,7 @@ export async function getAggregatedFarmRate(
     return 0
   }
 
-  // Return average of trap rates
+  // Return average of trap rates (e.g., Trap A: 1/day + Trap B: 2/day = 1.5/day average)
   return trapRates.reduce((sum, rate) => sum + rate, 0) / trapRates.length
 }
 

@@ -73,7 +73,7 @@ export function LoginForm() {
           {loading ? 'Logging in...' : 'Log In'}
         </button>
         <p className="text-center text-sm text-gray-600">
-          Don't have an account?{' '}
+          No account?{' '}
           <Link href="/signup" className="text-blue-600 hover:underline">
             Sign up
           </Link>

@@ -68,7 +68,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   }
 
   const farm = farms[0]
-  const pestType = farm.pestType as PestType
+  const _pestType = farm.pestType as PestType
 
   // Get trap info for the trap selector
   const trapRatesData = await getTrapRates(farm.id, user)

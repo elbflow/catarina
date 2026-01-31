@@ -10,7 +10,7 @@ interface OnboardingFormProps {
 }
 
 export function OnboardingForm({ pestTypes }: OnboardingFormProps) {
-  const router = useRouter()
+  const _router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({

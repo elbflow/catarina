@@ -14,7 +14,7 @@ export async function seedDemoData() {
   // ============ USERS ============
 
   // 1. Superadmin (developer)
-  const superadmin = await payload.create({
+  const _superadmin = await payload.create({
     collection: 'users',
     data: {
       email: 'admin@elbflow.com',

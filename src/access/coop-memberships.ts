@@ -1,8 +1,8 @@
-import type { Access } from 'payload'
+import type { Access, PayloadRequest } from 'payload'
 import { getUser } from './index'
 
 // Helper: Check if user is admin of a specific co-op
-async function isCoopAdmin(req: any, coopId: string | number): Promise<boolean> {
+async function isCoopAdmin(req: PayloadRequest, coopId: string | number): Promise<boolean> {
   const user = getUser(req)
   if (!user) return false
   if (user.isSuperAdmin) return true
@@ -22,7 +22,7 @@ async function isCoopAdmin(req: any, coopId: string | number): Promise<boolean> 
     req,
   })
 
-  return adminCheck.totalDocs > 0
+  return adminCheck.docs.length > 0
 }
 
 // Read: User can see their own memberships + memberships in co-ops they admin

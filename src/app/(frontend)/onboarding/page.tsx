@@ -40,7 +40,7 @@ export default async function OnboardingPage() {
         <div className="text-center mb-6">
           <div className="text-4xl mb-3">🐞</div>
           <h1 className="text-2xl font-semibold mb-2">Welcome to Catarina</h1>
-          <p className="text-gray-600">Let's set up your first farm to start tracking pests.</p>
+          <p className="text-gray-600">Set up your first farm to start tracking pests.</p>
         </div>
         <OnboardingForm pestTypes={pestTypes.docs} />
       </div>

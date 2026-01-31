@@ -54,7 +54,7 @@ export const CoopMemberships: CollectionConfig = {
       ],
       access: {
         // Only co-op admins or superadmins can change member roles
-        update: async ({ req, id }) => {
+        update: async ({ req }) => {
           if (!req.user) return false
           if (req.user.isSuperAdmin) return true
           // Check if user is admin of this co-op
@@ -66,7 +66,7 @@ export const CoopMemberships: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      async ({ data, operation, req }) => {
+      async ({ data, operation }) => {
         // When accepting invite, can only change status, not other fields
         if (operation === 'update' && data.status === 'active') {
           // Validation handled in access control

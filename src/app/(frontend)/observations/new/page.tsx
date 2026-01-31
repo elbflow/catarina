@@ -39,8 +39,8 @@ export default async function NewObservationPage() {
             <ObservationForm
               farms={farms}
               pestTypes={pestTypes}
-              defaultFarmId={farms[0]?.id}
-              defaultPestTypeId={pestTypes[0]?.id}
+              defaultFarmId={String(farms[0]?.id)}
+              defaultPestTypeId={String(pestTypes[0]?.id)}
             />
           </div>
         )}

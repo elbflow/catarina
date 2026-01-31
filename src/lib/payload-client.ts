@@ -32,8 +32,8 @@ export async function createObservation(
   data: {
     date: string
     count: number
-    farm: string
-    pestType: string
+    farm: number | string
+    pestType: number | string
     notes?: string
   },
 ): Promise<PestObservation> {
@@ -41,7 +41,13 @@ export async function createObservation(
   
   return await payload.create({
     collection: 'pest-observations',
-    data,
+    data: {
+      date: data.date,
+      count: data.count,
+      farm: typeof data.farm === 'string' ? parseInt(data.farm, 10) : data.farm,
+      pestType: typeof data.pestType === 'string' ? parseInt(data.pestType, 10) : data.pestType,
+      notes: data.notes,
+    },
   })
 }
 

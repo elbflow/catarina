@@ -4,7 +4,6 @@ import { RiskZone } from '@/components/dashboard/RiskZone'
 import { WarningBanner } from '@/components/dashboard/WarningBanner'
 import { ObservationCard } from '@/components/dashboard/ObservationCard'
 import Link from 'next/link'
-import type { ObservationWithRelations } from '@/lib/payload-client'
 
 export default async function HomePage() {
   const farms = await getFarms()
@@ -34,7 +33,7 @@ export default async function HomePage() {
 
   const farm = farms[0]
   const pestType = pestTypes[0]
-  const observations = await getObservations(farm.id, pestType.id)
+  const observations = await getObservations(String(farm.id), String(pestType.id))
 
   const latestObservation = observations.length > 0 ? observations[0] : null
   const currentCount = latestObservation?.count || 0

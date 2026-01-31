@@ -63,7 +63,7 @@ export function TrendChart({ observations, threshold }: TrendChartProps) {
               borderRadius: '8px',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             }}
-            formatter={(value: number) => [value, 'Pest Count']}
+            formatter={(value) => [value ?? 0, 'Pest Count']}
             labelStyle={{ color: '#374151', fontWeight: 500 }}
           />
           <ReferenceLine

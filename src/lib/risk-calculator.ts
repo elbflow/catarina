@@ -60,12 +60,12 @@ export function getDaysUntilThreshold(
   const sumX2 = dates.reduce((sum, x) => sum + x * x, 0)
 
   const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
-  const intercept = (sumY - slope * sumX) / n
+  const _intercept = (sumY - slope * sumX) / n
 
   // Project when threshold will be reached
   if (slope <= 0) return null // Not increasing
 
-  const lastDate = dates[dates.length - 1]
+  const _lastDate = dates[dates.length - 1]
   const lastCount = counts[counts.length - 1]
 
   if (lastCount >= threshold) return 0 // Already exceeded

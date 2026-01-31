@@ -97,7 +97,7 @@ export function ObservationForm({
         >
           <option value="">Select a farm</option>
           {farms.map((farm) => (
-            <option key={farm.id} value={farm.id}>
+            <option key={String(farm.id)} value={String(farm.id)}>
               {farm.name}
             </option>
           ))}
@@ -117,7 +117,7 @@ export function ObservationForm({
         >
           <option value="">Select a pest type</option>
           {pestTypes.map((pest) => (
-            <option key={pest.id} value={pest.id}>
+            <option key={String(pest.id)} value={String(pest.id)}>
               {pest.name} (Threshold: {pest.threshold})
             </option>
           ))}

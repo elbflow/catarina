@@ -32,6 +32,7 @@ export async function seedDemoData() {
       name: 'System Admin',
       role: 'farmer',
       isSuperAdmin: true,
+      tenants: [], // Multi-tenant plugin field; assigned later for non-superadmins
     },
   })
   console.log('Created superadmin: admin@elbflow.com')
@@ -45,6 +46,7 @@ export async function seedDemoData() {
       name: 'Maria Gonzalez',
       role: 'farmer',
       isSuperAdmin: false,
+      tenants: [],
     },
   })
 
@@ -57,6 +59,7 @@ export async function seedDemoData() {
       name: 'Tom Mitchell',
       role: 'farmer',
       isSuperAdmin: false,
+      tenants: [],
     },
   })
 
@@ -69,6 +72,7 @@ export async function seedDemoData() {
       name: 'Sarah Chen',
       role: 'farmer',
       isSuperAdmin: false,
+      tenants: [],
     },
   })
 
@@ -81,6 +85,7 @@ export async function seedDemoData() {
       name: 'Bob Williams',
       role: 'farmer',
       isSuperAdmin: false,
+      tenants: [],
     },
   })
 
@@ -93,6 +98,7 @@ export async function seedDemoData() {
       name: 'David Park',
       role: 'farmer',
       isSuperAdmin: false,
+      tenants: [],
     },
   })
 
@@ -105,6 +111,7 @@ export async function seedDemoData() {
       name: 'Jennifer Marks',
       role: 'technician',
       isSuperAdmin: false,
+      tenants: [],
     },
   })
 
@@ -297,19 +304,19 @@ export async function seedDemoData() {
   const gonzalezTraps = [
     await payload.create({
       collection: 'traps',
-      data: { name: 'Block A - North', farm: gonzalezFarm.id, isActive: true },
+      data: { name: 'Block A - North', farm: gonzalezFarm.id, tenant: gonzalezFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Block A - South', farm: gonzalezFarm.id, isActive: true },
+      data: { name: 'Block A - South', farm: gonzalezFarm.id, tenant: gonzalezFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Block B - Honeycrisp', farm: gonzalezFarm.id, isActive: true },
+      data: { name: 'Block B - Honeycrisp', farm: gonzalezFarm.id, tenant: gonzalezFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Block C - Gala', farm: gonzalezFarm.id, isActive: true },
+      data: { name: 'Block C - Gala', farm: gonzalezFarm.id, tenant: gonzalezFarm.id, isActive: true },
     }),
   ]
 
@@ -317,15 +324,15 @@ export async function seedDemoData() {
   const mitchellTraps = [
     await payload.create({
       collection: 'traps',
-      data: { name: 'East Orchard', farm: mitchellFarm.id, isActive: true },
+      data: { name: 'East Orchard', farm: mitchellFarm.id, tenant: mitchellFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'West Orchard', farm: mitchellFarm.id, isActive: true },
+      data: { name: 'West Orchard', farm: mitchellFarm.id, tenant: mitchellFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Young Trees', farm: mitchellFarm.id, isActive: true },
+      data: { name: 'Young Trees', farm: mitchellFarm.id, tenant: mitchellFarm.id, isActive: true },
     }),
   ]
 
@@ -333,15 +340,15 @@ export async function seedDemoData() {
   const sunriseTraps = [
     await payload.create({
       collection: 'traps',
-      data: { name: 'Main Field', farm: sunriseFarm.id, isActive: true },
+      data: { name: 'Main Field', farm: sunriseFarm.id, tenant: sunriseFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Hillside Plot', farm: sunriseFarm.id, isActive: true },
+      data: { name: 'Hillside Plot', farm: sunriseFarm.id, tenant: sunriseFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Border Trap', farm: sunriseFarm.id, isActive: true },
+      data: { name: 'Border Trap', farm: sunriseFarm.id, tenant: sunriseFarm.id, isActive: true },
     }),
   ]
 
@@ -349,11 +356,11 @@ export async function seedDemoData() {
   const williamsTraps = [
     await payload.create({
       collection: 'traps',
-      data: { name: 'Primary Trap', farm: williamsFarm.id, isActive: true },
+      data: { name: 'Primary Trap', farm: williamsFarm.id, tenant: williamsFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Secondary Trap', farm: williamsFarm.id, isActive: true },
+      data: { name: 'Secondary Trap', farm: williamsFarm.id, tenant: williamsFarm.id, isActive: true },
     }),
   ]
 
@@ -361,15 +368,15 @@ export async function seedDemoData() {
   const parkTraps = [
     await payload.create({
       collection: 'traps',
-      data: { name: 'Certified Block 1', farm: parkFarm.id, isActive: true },
+      data: { name: 'Certified Block 1', farm: parkFarm.id, tenant: parkFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Certified Block 2', farm: parkFarm.id, isActive: true },
+      data: { name: 'Certified Block 2', farm: parkFarm.id, tenant: parkFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Perimeter Monitor', farm: parkFarm.id, isActive: true },
+      data: { name: 'Perimeter Monitor', farm: parkFarm.id, tenant: parkFarm.id, isActive: true },
     }),
   ]
 
@@ -386,6 +393,7 @@ export async function seedDemoData() {
   // Helper to create observations
   async function createObservations(
     trapId: number,
+    farmId: number,
     observations: ObservationData[],
   ) {
     for (const obs of observations) {
@@ -398,6 +406,7 @@ export async function seedDemoData() {
           date: date.toISOString().split('T')[0],
           count: obs.count,
           trap: trapId,
+          tenant: farmId,
           isBaseline: false,
           notes: obs.notes,
         },
@@ -409,7 +418,7 @@ export async function seedDemoData() {
   // Well-managed farm, currently in WARNING zone but controlled
 
   // Block A - North: Moderate activity, stable
-  await createObservations(gonzalezTraps[0].id, [
+  await createObservations(gonzalezTraps[0].id, gonzalezFarm.id, [
     { daysAgo: 42, count: 1 },
     { daysAgo: 39, count: 2 },
     { daysAgo: 36, count: 2 },
@@ -428,7 +437,7 @@ export async function seedDemoData() {
   ])
 
   // Block A - South: Lower activity (good airflow area)
-  await createObservations(gonzalezTraps[1].id, [
+  await createObservations(gonzalezTraps[1].id, gonzalezFarm.id, [
     { daysAgo: 42, count: 0 },
     { daysAgo: 39, count: 1 },
     { daysAgo: 36, count: 1 },
@@ -447,7 +456,7 @@ export async function seedDemoData() {
   ])
 
   // Block B - Honeycrisp: Higher activity (variety attracts more moths)
-  await createObservations(gonzalezTraps[2].id, [
+  await createObservations(gonzalezTraps[2].id, gonzalezFarm.id, [
     { daysAgo: 42, count: 2 },
     { daysAgo: 39, count: 3 },
     { daysAgo: 36, count: 4 },
@@ -466,7 +475,7 @@ export async function seedDemoData() {
   ])
 
   // Block C - Gala: Moderate, steady
-  await createObservations(gonzalezTraps[3].id, [
+  await createObservations(gonzalezTraps[3].id, gonzalezFarm.id, [
     { daysAgo: 42, count: 1 },
     { daysAgo: 39, count: 2 },
     { daysAgo: 36, count: 2 },
@@ -488,7 +497,7 @@ export async function seedDemoData() {
   // Currently in DANGER zone - needs immediate action
 
   // East Orchard: Very high activity - hotspot
-  await createObservations(mitchellTraps[0].id, [
+  await createObservations(mitchellTraps[0].id, mitchellFarm.id, [
     { daysAgo: 41, count: 2 },
     { daysAgo: 38, count: 3 },
     { daysAgo: 35, count: 4 },
@@ -507,7 +516,7 @@ export async function seedDemoData() {
   ])
 
   // West Orchard: High but not as severe
-  await createObservations(mitchellTraps[1].id, [
+  await createObservations(mitchellTraps[1].id, mitchellFarm.id, [
     { daysAgo: 41, count: 1 },
     { daysAgo: 38, count: 2 },
     { daysAgo: 35, count: 3 },
@@ -526,7 +535,7 @@ export async function seedDemoData() {
   ])
 
   // Young Trees: Moderate (less established)
-  await createObservations(mitchellTraps[2].id, [
+  await createObservations(mitchellTraps[2].id, mitchellFarm.id, [
     { daysAgo: 41, count: 1 },
     { daysAgo: 38, count: 1 },
     { daysAgo: 35, count: 2 },
@@ -548,7 +557,7 @@ export async function seedDemoData() {
   // Currently in SAFE zone - excellent pest management
 
   // Main Field: Low, stable activity
-  await createObservations(sunriseTraps[0].id, [
+  await createObservations(sunriseTraps[0].id, sunriseFarm.id, [
     { daysAgo: 40, count: 1 },
     { daysAgo: 37, count: 1 },
     { daysAgo: 34, count: 2 },
@@ -566,7 +575,7 @@ export async function seedDemoData() {
   ])
 
   // Hillside Plot: Very low
-  await createObservations(sunriseTraps[1].id, [
+  await createObservations(sunriseTraps[1].id, sunriseFarm.id, [
     { daysAgo: 40, count: 0 },
     { daysAgo: 37, count: 1 },
     { daysAgo: 34, count: 1 },
@@ -584,7 +593,7 @@ export async function seedDemoData() {
   ])
 
   // Border Trap: Slightly higher (edge effect from neighboring property)
-  await createObservations(sunriseTraps[2].id, [
+  await createObservations(sunriseTraps[2].id, sunriseFarm.id, [
     { daysAgo: 40, count: 1 },
     { daysAgo: 37, count: 2 },
     { daysAgo: 34, count: 2 },
@@ -605,7 +614,7 @@ export async function seedDemoData() {
   // Currently in WARNING zone - trending upward, needs attention
 
   // Primary Trap: Moderate, increasing trend
-  await createObservations(williamsTraps[0].id, [
+  await createObservations(williamsTraps[0].id, williamsFarm.id, [
     { daysAgo: 39, count: 1 },
     { daysAgo: 36, count: 1 },
     { daysAgo: 33, count: 2 },
@@ -623,7 +632,7 @@ export async function seedDemoData() {
   ])
 
   // Secondary Trap: Similar pattern
-  await createObservations(williamsTraps[1].id, [
+  await createObservations(williamsTraps[1].id, williamsFarm.id, [
     { daysAgo: 39, count: 0 },
     { daysAgo: 36, count: 1 },
     { daysAgo: 33, count: 1 },
@@ -644,7 +653,7 @@ export async function seedDemoData() {
   // Mixed results - organic management challenges
 
   // Certified Block 1: Moderate activity (organic methods take longer)
-  await createObservations(parkTraps[0].id, [
+  await createObservations(parkTraps[0].id, parkFarm.id, [
     { daysAgo: 42, count: 2 },
     { daysAgo: 39, count: 2 },
     { daysAgo: 36, count: 3 },
@@ -663,7 +672,7 @@ export async function seedDemoData() {
   ])
 
   // Certified Block 2: Better results
-  await createObservations(parkTraps[1].id, [
+  await createObservations(parkTraps[1].id, parkFarm.id, [
     { daysAgo: 42, count: 1 },
     { daysAgo: 39, count: 2 },
     { daysAgo: 36, count: 2 },
@@ -682,7 +691,7 @@ export async function seedDemoData() {
   ])
 
   // Perimeter Monitor: Higher (catching migrants from conventional farms)
-  await createObservations(parkTraps[2].id, [
+  await createObservations(parkTraps[2].id, parkFarm.id, [
     { daysAgo: 42, count: 3 },
     { daysAgo: 39, count: 4 },
     { daysAgo: 36, count: 4 },

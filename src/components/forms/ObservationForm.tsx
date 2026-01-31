@@ -53,9 +53,9 @@ export function ObservationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="date" className="label">
           Observation Date
         </label>
         <input
@@ -64,12 +64,12 @@ export function ObservationForm({
           required
           value={formData.date}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input"
         />
       </div>
 
       <div>
-        <label htmlFor="count" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="count" className="label">
           Trap Count
         </label>
         <input
@@ -79,13 +79,13 @@ export function ObservationForm({
           min="0"
           value={formData.count}
           onChange={(e) => setFormData({ ...formData, count: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input"
           placeholder="Number of pests caught"
         />
       </div>
 
       <div>
-        <label htmlFor="farm" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="farm" className="label">
           Farm
         </label>
         <select
@@ -93,7 +93,7 @@ export function ObservationForm({
           required
           value={formData.farm}
           onChange={(e) => setFormData({ ...formData, farm: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input"
         >
           <option value="">Select a farm</option>
           {farms.map((farm) => (
@@ -105,7 +105,7 @@ export function ObservationForm({
       </div>
 
       <div>
-        <label htmlFor="pestType" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="pestType" className="label">
           Pest Type
         </label>
         <select
@@ -113,7 +113,7 @@ export function ObservationForm({
           required
           value={formData.pestType}
           onChange={(e) => setFormData({ ...formData, pestType: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input"
         >
           <option value="">Select a pest type</option>
           {pestTypes.map((pest) => (
@@ -125,38 +125,30 @@ export function ObservationForm({
       </div>
 
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-          Notes (Optional)
+        <label htmlFor="notes" className="label">
+          Notes <span className="text-gray-400 font-normal">(Optional)</span>
         </label>
         <textarea
           id="notes"
           rows={3}
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input"
           placeholder="Additional observations or notes..."
         />
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
 
-      <div className="flex gap-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+      <div className="flex gap-3 pt-2">
+        <button type="submit" disabled={loading} className="btn-primary flex-1">
           {loading ? 'Saving...' : 'Save Observation'}
         </button>
-        <button
-          type="button"
-          onClick={() => router.push('/')}
-          className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-        >
+        <button type="button" onClick={() => router.push('/')} className="btn-secondary">
           Cancel
         </button>
       </div>

@@ -14,17 +14,17 @@ export function ObservationCard({ observation }: ObservationCardProps) {
   })
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="border border-gray-200 rounded-lg p-4 bg-white hover:border-gray-300 transition-colors">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-900">{date}</span>
-        <span className="text-2xl font-bold text-blue-600">{observation.count}</span>
+        <span className="text-sm font-medium text-gray-700">{date}</span>
+        <span className="text-xl font-semibold text-blue-600">{observation.count}</span>
       </div>
       <div className="text-xs text-gray-500">
-        {typeof observation.farm === 'object' && observation.farm?.name} •{' '}
+        {typeof observation.farm === 'object' && observation.farm?.name} ·{' '}
         {typeof observation.pestType === 'object' && observation.pestType?.name}
       </div>
       {observation.notes && (
-        <p className="text-sm text-gray-600 mt-2">{observation.notes}</p>
+        <p className="text-sm text-gray-600 mt-2 pt-2 border-t border-gray-100">{observation.notes}</p>
       )}
     </div>
   )

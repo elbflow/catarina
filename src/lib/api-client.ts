@@ -1,8 +1,6 @@
 // Client-side API client (for use in Client Components)
 // Uses fetch to call Payload REST API
 
-const API_URL = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'
-
 export interface CreateObservationData {
   date: string
   count: number
@@ -12,7 +10,10 @@ export interface CreateObservationData {
 }
 
 export async function createObservation(data: CreateObservationData) {
-  const response = await fetch(`${API_URL}/api/pest-observations`, {
+  // Use current origin to avoid port mismatch issues
+  const apiUrl = typeof window !== 'undefined' ? window.location.origin : ''
+
+  const response = await fetch(`${apiUrl}/api/pest-observations`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

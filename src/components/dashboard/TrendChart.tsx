@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -35,46 +34,49 @@ export function TrendChart({ observations, threshold }: TrendChartProps) {
     fullDate: obs.date,
   }))
 
-  // Determine risk zones
-  const getRiskColor = (count: number) => {
-    const percentage = (count / threshold) * 100
-    if (percentage >= 100) return '#ef4444' // red-500
-    if (percentage >= 80) return '#f59e0b' // amber-500
-    return '#10b981' // emerald-500
-  }
-
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-72">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+        <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
               <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 12 }}
-            angle={-45}
-            textAnchor="end"
-            height={60}
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fontSize: 12, fill: '#6b7280' }}
+            axisLine={{ stroke: '#e5e7eb' }}
+            tickLine={{ stroke: '#e5e7eb' }}
           />
-          <YAxis tick={{ fontSize: 12 }} />
+          <YAxis 
+            tick={{ fontSize: 12, fill: '#6b7280' }}
+            axisLine={{ stroke: '#e5e7eb' }}
+            tickLine={{ stroke: '#e5e7eb' }}
+          />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: 'white',
               border: '1px solid #e5e7eb',
               borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             }}
-            formatter={(value: number) => [value, 'Count']}
+            formatter={(value: number) => [value, 'Pest Count']}
+            labelStyle={{ color: '#374151', fontWeight: 500 }}
           />
           <ReferenceLine
             y={threshold}
             stroke="#ef4444"
             strokeDasharray="5 5"
-            label={{ value: `Threshold: ${threshold}`, position: 'right' }}
+            strokeWidth={2}
+            label={{ 
+              value: `Threshold: ${threshold}`, 
+              position: 'right',
+              fill: '#ef4444',
+              fontSize: 12,
+            }}
           />
           <Area
             type="monotone"
@@ -89,8 +91,8 @@ export function TrendChart({ observations, threshold }: TrendChartProps) {
             dataKey="count"
             stroke="#3b82f6"
             strokeWidth={2}
-            dot={{ fill: '#3b82f6', r: 4 }}
-            activeDot={{ r: 6 }}
+            dot={{ fill: 'white', stroke: '#3b82f6', strokeWidth: 2, r: 4 }}
+            activeDot={{ fill: '#3b82f6', r: 6, stroke: 'white', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

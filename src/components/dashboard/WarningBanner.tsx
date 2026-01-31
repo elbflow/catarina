@@ -18,19 +18,19 @@ export function WarningBanner({ currentCount, threshold }: WarningBannerProps) {
 
   return (
     <div
-      className={`rounded-lg border-2 p-4 ${
+      className={`rounded-xl border p-4 ${
         isDanger
-          ? 'bg-red-50 border-red-300 text-red-900'
-          : 'bg-amber-50 border-amber-300 text-amber-900'
+          ? 'bg-red-50 border-red-200'
+          : 'bg-amber-50 border-amber-200'
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="text-2xl">{isDanger ? '⚠️' : '⚡'}</div>
+        <span className="text-xl">{isDanger ? '🚨' : '⚡'}</span>
         <div className="flex-1">
-          <h3 className="font-semibold mb-1">
+          <h3 className={`font-semibold mb-1 ${isDanger ? 'text-red-900' : 'text-amber-900'}`}>
             {isDanger ? 'Action Required' : 'Approaching Threshold'}
           </h3>
-          <p className="text-sm">
+          <p className={`text-sm ${isDanger ? 'text-red-800' : 'text-amber-800'}`}>
             {isDanger
               ? `Pest count (${currentCount}) has exceeded the action threshold (${threshold}). Immediate intervention recommended.`
               : `Pest count (${currentCount}) is approaching the action threshold (${threshold}). Monitor closely and prepare for intervention.`}

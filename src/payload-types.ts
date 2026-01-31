@@ -69,6 +69,9 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    farms: Farm;
+    'pest-types': PestType;
+    'pest-observations': PestObservation;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +81,9 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    farms: FarmsSelect<false> | FarmsSelect<true>;
+    'pest-types': PestTypesSelect<false> | PestTypesSelect<true>;
+    'pest-observations': PestObservationsSelect<false> | PestObservationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -161,6 +167,64 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "farms".
+ */
+export interface Farm {
+  id: number;
+  name: string;
+  crop: 'apple' | 'pecan' | 'grape' | 'berry';
+  /**
+   * Optional location for future use
+   */
+  location?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pest-types".
+ */
+export interface PestType {
+  id: number;
+  name: string;
+  crop: 'apple' | 'pecan' | 'grape' | 'berry';
+  /**
+   * Number of pests per trap that triggers action
+   */
+  threshold: number;
+  /**
+   * Optional description of the pest
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pest-observations".
+ */
+export interface PestObservation {
+  id: number;
+  date: string;
+  /**
+   * Number of pests caught in trap
+   */
+  count: number;
+  farm: number | Farm;
+  pestType: number | PestType;
+  /**
+   * Optional notes about this observation
+   */
+  notes?: string | null;
+  /**
+   * Optional photo of the trap (for V4 AI feature)
+   */
+  photo?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -190,6 +254,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'farms';
+        value: number | Farm;
+      } | null)
+    | ({
+        relationTo: 'pest-types';
+        value: number | PestType;
+      } | null)
+    | ({
+        relationTo: 'pest-observations';
+        value: number | PestObservation;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -272,6 +348,43 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "farms_select".
+ */
+export interface FarmsSelect<T extends boolean = true> {
+  name?: T;
+  crop?: T;
+  location?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pest-types_select".
+ */
+export interface PestTypesSelect<T extends boolean = true> {
+  name?: T;
+  crop?: T;
+  threshold?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pest-observations_select".
+ */
+export interface PestObservationsSelect<T extends boolean = true> {
+  date?: T;
+  count?: T;
+  farm?: T;
+  pestType?: T;
+  notes?: T;
+  photo?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -1,67 +1,199 @@
-# Payload Blank Template
+# Catarina - IPM Scout-to-Action
 
-This template comes configured with the bare minimum to get started on anything you need.
+**Food production is becoming more sustainable, but timing is everything.**
 
-## Quick start
+IPM Scout-to-Action helps growers understand what's happening in their fields and what's likely coming next, so they can plan the right action at the right time. By turning simple field observations and local conditions into clear risk signals and reminders, the product helps farmers coordinate, act earlier, and stay sustainable.
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+## Features
 
-## Quick Start - local setup
+- **Pest Observation Tracking** - Manual entry of trap counts with date, farm, and pest type
+- **Dashboard Visualization** - Trend charts showing pest counts over time with threshold indicators
+- **Risk Zone Indicators** - Visual risk levels (Safe/Warning/Danger) based on threshold proximity
+- **Warning System** - Alerts when pest counts approach or exceed action thresholds
+- **Recent Observations** - Quick view of latest trap counts
 
-To spin up this template locally, follow these steps:
+## Tech Stack
 
-### Clone
+- **Framework:** Next.js 15 (App Router)
+- **CMS/Backend:** Payload CMS 3.x
+- **Database:** PostgreSQL (Vercel Postgres/Neon)
+- **Charts:** Recharts
+- **Styling:** Tailwind CSS
+- **Deployment:** Vercel
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+## Quick Start
 
-### Development
+### Prerequisites
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+- Node.js 18.20.2+ or 20.9.0+
+- pnpm 9+ or 10+
+- PostgreSQL database (local or cloud)
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+### Local Development
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+1. **Clone and install dependencies:**
+   ```bash
+   pnpm install
+   ```
 
-#### Docker (Optional)
+2. **Set up environment variables:**
+   Create a `.env` file in the root directory:
+   ```env
+   PAYLOAD_SECRET=your-secret-key-here
+   PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3000
+   POSTGRES_URL=postgresql://user:password@localhost:5432/catarina
+   NEXT_PUBLIC_PAYLOAD_URL=http://localhost:3000
+   ```
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+3. **Start the development server:**
+   ```bash
+   pnpm dev
+   ```
 
-To do so, follow these steps:
+4. **Access the application:**
+   - Frontend: http://localhost:3000
+   - Admin Panel: http://localhost:3000/admin
 
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+5. **Seed demo data:**
+   - Option 1: Via API endpoint (POST to `/api/seed`)
+   - Option 2: Via admin panel (create farm, pest type, and observations manually)
 
-## How it works
+### Seeding Demo Data
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+To seed the demo data programmatically:
 
-### Collections
+```bash
+curl -X POST http://localhost:3000/api/seed
+```
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+This will create:
+- 1 Farm: "Apple Orchard Demo"
+- 1 Pest Type: "Codling Moth" (threshold: 5)
+- 30 observations over the last 30 days showing a realistic trend
 
-- #### Users (Authentication)
+## Project Structure
 
-  Users are auth-enabled collections that have access to the admin panel.
+```
+src/
+├── app/
+│   ├── (frontend)/          # Frontend routes
+│   │   ├── page.tsx         # Dashboard (home page)
+│   │   └── layout.tsx       # Root layout
+│   ├── observations/        # Observation routes
+│   │   └── new/page.tsx     # Add observation form
+│   └── api/
+│       └── seed/route.ts    # Demo data seeder endpoint
+├── collections/             # Payload collections
+│   ├── Farms.ts
+│   ├── PestTypes.ts
+│   ├── PestObservations.ts
+│   ├── Users.ts
+│   └── Media.ts
+├── components/
+│   ├── dashboard/           # Dashboard components
+│   │   ├── TrendChart.tsx
+│   │   ├── RiskZone.tsx
+│   │   ├── WarningBanner.tsx
+│   │   └── ObservationCard.tsx
+│   └── forms/
+│       └── ObservationForm.tsx
+├── lib/
+│   ├── payload-client.ts    # Payload API client
+│   ├── risk-calculator.ts   # Risk calculation logic
+│   └── demo-data.ts         # Demo data seeder
+└── payload.config.ts        # Payload configuration
+```
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+## Collections
 
-- #### Media
+### Farms
+- `name` - Farm name
+- `crop` - Crop type (Apple, Pecan, Grape, Berry)
+- `location` - Optional location
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+### PestTypes
+- `name` - Pest name (e.g., "Codling Moth")
+- `crop` - Associated crop type
+- `threshold` - Action threshold count
+- `description` - Optional description
 
-### Docker
+### PestObservations
+- `date` - Observation date
+- `count` - Trap count
+- `farm` - Relationship to Farm
+- `pestType` - Relationship to PestType
+- `notes` - Optional notes
+- `photo` - Optional photo upload (for future AI feature)
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+## Development
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+### Generate Types
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+After modifying collections, regenerate TypeScript types:
 
-## Questions
+```bash
+pnpm generate:types
+```
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+### Build
+
+```bash
+pnpm build
+```
+
+### Start Production Server
+
+```bash
+pnpm start
+```
+
+## Deployment to Vercel
+
+1. **Connect to Vercel:**
+   - Push your code to GitHub
+   - Import project in Vercel dashboard
+
+2. **Set up services:**
+   - Connect **Neon Database** (PostgreSQL)
+   - Connect **Vercel Blob Storage** (for media uploads)
+
+3. **Configure environment variables:**
+   - `PAYLOAD_SECRET` - Strong random string
+   - `PAYLOAD_PUBLIC_SERVER_URL` - Your Vercel app URL
+   - `POSTGRES_URL` - Auto-populated from Neon
+   - `NEXT_PUBLIC_PAYLOAD_URL` - Your Vercel app URL
+
+4. **Deploy:**
+   - Vercel will automatically build and deploy
+
+5. **Seed data:**
+   - After deployment, visit `/api/seed` or use the admin panel
+
+## Roadmap
+
+### V1 - Absolute Minimum (Current)
+- ✅ Single tenant (no auth)
+- ✅ One farm, one pest
+- ✅ Manual entry of trap counts
+- ✅ Simple trend chart
+- ✅ Static danger threshold + in-app warning
+
+### V2 - Product Signal (Next)
+- Polished dashboard UI
+- Clear "risk zone" visualization
+- Copy explaining what's happening and why it matters
+
+### V3 - Active Assistant
+- Notifications (in-app or email)
+- Action reminders
+
+### V4 - AI Assist
+- Photo → AI-assisted prefill (count + pest guess)
+
+### V5 - AI Reasoning (Stretch)
+- Risk forecasting curve
+- Natural language explanation
+
+## License
+
+MIT

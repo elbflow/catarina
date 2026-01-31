@@ -1,5 +1,6 @@
 import { getUser } from '@/access'
 import type { CollectionConfig } from 'payload'
+import { APIError } from 'payload'
 
 export const PestObservations: CollectionConfig = {
   slug: 'pest-observations',
@@ -32,6 +33,43 @@ export const PestObservations: CollectionConfig = {
       const user = getUser(req)
       return user?.isSuperAdmin === true
     },
+  },
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation === 'create' && data.trap && data.date) {
+          // Check if observation already exists for this trap + date
+          const existing = await req.payload.find({
+            collection: 'pest-observations',
+            where: {
+              and: [
+                { trap: { equals: typeof data.trap === 'object' ? data.trap.id : data.trap } },
+                { date: { equals: data.date } },
+              ],
+            },
+            limit: 1,
+          })
+
+          if (existing.docs.length > 0) {
+            // Format the date for a user-friendly error message
+            const observationDate = new Date(data.date)
+            const formattedDate = observationDate.toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })
+
+            throw new APIError(
+              `An observation for this trap already exists on ${formattedDate}. ` +
+                `You can edit the existing observation in the admin panel or choose a different date. ` +
+                `Only one observation per trap per day is allowed.`,
+              400,
+            )
+          }
+        }
+        return data
+      },
+    ],
   },
   fields: [
     {

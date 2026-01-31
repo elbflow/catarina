@@ -30,8 +30,13 @@ export async function createObservation(data: CreateObservationData) {
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Failed to create observation' }))
-    throw new Error(error.message || 'Failed to create observation')
+    const errorBody = await response.json().catch(() => ({}))
+    // Payload returns { errors: [{ message: "..." }] }
+    const errorMessage =
+      errorBody.errors?.[0]?.message ||
+      errorBody.message ||
+      'Failed to create observation'
+    throw new Error(errorMessage)
   }
 
   return response.json()

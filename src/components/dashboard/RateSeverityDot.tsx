@@ -2,11 +2,16 @@
 
 interface RateSeverityDotProps {
   rate: number | null
-  rateThreshold: number
   size?: 'sm' | 'md'
 }
 
-export function RateSeverityDot({ rate, rateThreshold, size = 'sm' }: RateSeverityDotProps) {
+/**
+ * Displays a colored dot indicating severity based on fixed thresholds:
+ * - Safe (green): rate < 1
+ * - Warning (amber): rate between 1 and 2
+ * - Danger (red): rate > 2
+ */
+export function RateSeverityDot({ rate, size = 'sm' }: RateSeverityDotProps) {
   if (rate === null) {
     // Baseline observation - gray dot
     return (
@@ -17,16 +22,15 @@ export function RateSeverityDot({ rate, rateThreshold, size = 'sm' }: RateSeveri
     )
   }
 
-  const percentage = (rate / rateThreshold) * 100
   let colorClass = 'bg-emerald-500'
   let title = 'Safe'
 
-  if (percentage >= 100) {
+  if (rate > 2) {
     colorClass = 'bg-red-500'
-    title = 'Danger - exceeds threshold'
-  } else if (percentage >= 80) {
+    title = 'Danger - exceeds 2/day'
+  } else if (rate >= 1) {
     colorClass = 'bg-amber-500'
-    title = 'Warning - approaching threshold'
+    title = 'Warning - between 1-2/day'
   }
 
   return (

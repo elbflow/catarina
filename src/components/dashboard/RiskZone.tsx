@@ -3,12 +3,11 @@
 import { calculateRateRisk } from '@/lib/risk-calculator'
 
 interface RiskZoneProps {
-  currentRate: number
-  rateThreshold: number
+  averageRate: number
 }
 
-export function RiskZone({ currentRate, rateThreshold }: RiskZoneProps) {
-  const risk = calculateRateRisk(currentRate, rateThreshold)
+export function RiskZone({ averageRate }: RiskZoneProps) {
+  const risk = calculateRateRisk(averageRate)
 
   const getRiskStyles = () => {
     switch (risk.level) {
@@ -58,8 +57,8 @@ export function RiskZone({ currentRate, rateThreshold }: RiskZoneProps) {
           </div>
         </div>
         <div className="text-right">
-          <div className={`text-3xl font-bold ${styles.text}`}>{currentRate.toFixed(1)}</div>
-          <div className={`text-xs opacity-60 ${styles.text}`}>per day</div>
+          <div className={`text-3xl font-bold ${styles.text}`}>{averageRate.toFixed(1)}</div>
+          <div className={`text-xs opacity-60 ${styles.text}`}>3-day avg/day</div>
         </div>
       </div>
 
@@ -72,7 +71,7 @@ export function RiskZone({ currentRate, rateThreshold }: RiskZoneProps) {
           />
         </div>
         <div className={`text-sm font-medium ${styles.text}`}>
-          {currentRate.toFixed(1)}/{rateThreshold} per day
+          {averageRate.toFixed(1)}/2 per day
         </div>
       </div>
     </div>

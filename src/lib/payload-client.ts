@@ -372,5 +372,14 @@ export async function getLatestObservation(
   return result.docs.length > 0 ? (result.docs[0] as ObservationWithRelations) : null
 }
 
+/**
+ * Get the latest calculated rate for a specific trap.
+ */
+export async function getLatestRateForTrap(trapId: string | number): Promise<number> {
+  const observations = await getObservationsWithRatesForTrap(trapId)
+  const mostRecentWithRate = observations.find((obs) => obs.rate !== null)
+  return mostRecentWithRate?.rate ?? 0
+}
+
 // Note: This file is for server-side use only (Server Components, API routes, etc.)
 // For client-side API calls, use '@/lib/api-client' instead

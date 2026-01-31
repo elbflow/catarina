@@ -5,10 +5,9 @@ import { RateSeverityDot } from './RateSeverityDot'
 
 interface ObservationListProps {
   observations: ObservationWithRelationsAndRate[]
-  rateThreshold: number
 }
 
-export function ObservationList({ observations, rateThreshold }: ObservationListProps) {
+export function ObservationList({ observations }: ObservationListProps) {
   if (observations.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -69,7 +68,7 @@ export function ObservationList({ observations, rateThreshold }: ObservationList
               {rateLabel && (
                 <span className="text-sm font-medium text-gray-700">{rateLabel}</span>
               )}
-              <RateSeverityDot rate={obs.rate} rateThreshold={rateThreshold} />
+              <RateSeverityDot rate={obs.rate} />
             </div>
           </div>
         )

@@ -71,28 +71,30 @@ export function calculateObservationRates(
 }
 
 /**
- * Calculate risk level based on current rate and threshold.
+ * Calculate risk level based on average rate using fixed thresholds.
+ * Safe: average < 1
+ * Warning: average between 1 and 2
+ * Danger: average > 2
  */
-export function calculateRateRisk(currentRate: number, rateThreshold: number): RateRisk {
-  const ratePercentage = (currentRate / rateThreshold) * 100
+export function calculateRateRisk(averageRate: number): RateRisk {
   let level: RiskLevel = 'safe'
   let message = ''
 
-  if (ratePercentage >= 100) {
+  if (averageRate > 2) {
     level = 'danger'
-    message = `Action required: Rate (${currentRate.toFixed(1)}/day) exceeds threshold (${rateThreshold}/day)`
-  } else if (ratePercentage >= 80) {
+    message = `Action required: Average rate (${averageRate.toFixed(1)}/day) exceeds 2/day`
+  } else if (averageRate >= 1) {
     level = 'warning'
-    message = `Approaching threshold: ${currentRate.toFixed(1)}/${rateThreshold} per day (${Math.round(ratePercentage)}%)`
+    message = `Warning: Average rate (${averageRate.toFixed(1)}/day) between 1-2/day`
   } else {
     level = 'safe'
-    message = `Within safe range: ${currentRate.toFixed(1)}/${rateThreshold} per day (${Math.round(ratePercentage)}%)`
+    message = `Safe: Average rate (${averageRate.toFixed(1)}/day) below 1/day`
   }
 
   return {
     level,
-    currentRate,
-    ratePercentage,
+    currentRate: averageRate,
+    ratePercentage: (averageRate / 2) * 100,
     message,
   }
 }
@@ -108,6 +110,38 @@ export function getMostRecentRate(observationsWithRates: ObservationWithRate[]):
     }
   }
   return 0
+}
+
+/**
+ * Filter observations to last N days.
+ */
+export function filterObservationsToLastNDays<T extends { date: string }>(
+  observations: T[],
+  days: number,
+): T[] {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  cutoff.setHours(0, 0, 0, 0)
+  return observations.filter((obs) => new Date(obs.date) >= cutoff)
+}
+
+/**
+ * Calculate average daily rate for last N days.
+ * Sum of counts in the period divided by number of days.
+ */
+export function calculateAverageRateForLastNDays<T extends { date: string; count: number }>(
+  observations: T[],
+  days: number,
+): number {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  cutoff.setHours(0, 0, 0, 0)
+  const recentObs = observations.filter((obs) => new Date(obs.date) >= cutoff)
+
+  if (recentObs.length === 0) return 0
+
+  const totalCount = recentObs.reduce((sum, obs) => sum + obs.count, 0)
+  return totalCount / days
 }
 
 // Legacy function - kept for backwards compatibility during migration

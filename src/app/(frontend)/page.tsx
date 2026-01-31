@@ -1,17 +1,28 @@
+import { Suspense } from 'react'
 import {
   getFarms,
   getObservationsWithRatesForFarm,
-  getAggregatedFarmRate,
+  getObservationsWithRatesForTrap,
   getTrapRates,
+  getTrap,
 } from '@/lib/payload-client'
+import {
+  filterObservationsToLastNDays,
+  calculateAverageRateForLastNDays,
+} from '@/lib/risk-calculator'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { RiskZone } from '@/components/dashboard/RiskZone'
 import { ObservationList } from '@/components/dashboard/ObservationList'
-import { TrapManager } from '@/components/dashboard/TrapManager'
+import { TrapSelector } from '@/components/dashboard/TrapSelector'
 import Link from 'next/link'
 import type { PestType } from '@/payload-types'
 
-export default async function HomePage() {
+interface PageProps {
+  searchParams: Promise<{ trap?: string }>
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  const params = await searchParams
   const farms = await getFarms()
 
   if (farms.length === 0) {
@@ -39,12 +50,9 @@ export default async function HomePage() {
   const farm = farms[0]
   const pestType = farm.pestType as PestType
 
-  // Get aggregated rate across all traps
-  const currentRate = await getAggregatedFarmRate(farm.id)
-
-  // Get trap info for the trap manager
+  // Get trap info for the trap selector
   const trapRatesData = await getTrapRates(farm.id)
-  const trapsForManager = trapRatesData.map((t) => ({
+  const trapsForSelector = trapRatesData.map((t) => ({
     id: t.trap.id,
     name: t.trap.name,
     isActive: t.trap.isActive ?? true,
@@ -53,14 +61,39 @@ export default async function HomePage() {
     lastObservationDate: t.lastObservationDate,
   }))
 
-  // Get all observations for trend chart and list
-  const observations = await getObservationsWithRatesForFarm(farm.id)
+  // Determine selected trap from URL params
+  const trapIdParam = params.trap
+  let selectedTrapId: number | null = null
+  let validTrapSelected = false
 
-  // Get rate threshold from pest type
-  const rateThreshold = typeof pestType.rateThreshold === 'number' ? pestType.rateThreshold : 2
+  if (trapIdParam) {
+    const parsedId = parseInt(trapIdParam, 10)
+    if (!isNaN(parsedId)) {
+      // Validate that the trap exists
+      try {
+        await getTrap(parsedId)
+        selectedTrapId = parsedId
+        validTrapSelected = true
+      } catch {
+        // Invalid trap ID - fall back to all traps
+        selectedTrapId = null
+      }
+    }
+  }
+
+  // Get observations based on selection
+  const allObservations = validTrapSelected && selectedTrapId !== null
+    ? await getObservationsWithRatesForTrap(selectedTrapId)
+    : await getObservationsWithRatesForFarm(farm.id)
+
+  // Filter to last 5 days for display
+  const observations = filterObservationsToLastNDays(allObservations, 5)
+
+  // Calculate 3-day average rate for risk assessment
+  const averageRate = calculateAverageRateForLastNDays(allObservations, 3)
 
   const recentObservations = observations.slice(0, 10)
-  const hasTraps = trapsForManager.length > 0
+  const hasTraps = trapsForSelector.length > 0
 
   return (
     <div className="min-h-screen">
@@ -77,9 +110,18 @@ export default async function HomePage() {
                 </p>
               </div>
             </div>
-            <Link href="/observations/new" className="btn-primary">
-              + Add Observation
-            </Link>
+            <div className="flex items-center gap-3">
+              <Suspense fallback={<div className="h-9 w-24 bg-gray-100 rounded-lg animate-pulse" />}>
+                <TrapSelector
+                  farmId={String(farm.id)}
+                  traps={trapsForSelector}
+                  selectedTrapId={selectedTrapId}
+                />
+              </Suspense>
+              <Link href="/observations/new" className="btn-primary">
+                + Add Observation
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -95,11 +137,9 @@ export default async function HomePage() {
               Add traps to start recording observations. Each trap tracks its own
               capture rate, and the dashboard shows the average across all traps.
             </p>
-            <TrapManager
-              farmId={String(farm.id)}
-              traps={trapsForManager}
-              rateThreshold={rateThreshold}
-            />
+            <p className="text-gray-500 text-sm">
+              Use the trap selector in the header to add your first trap.
+            </p>
           </div>
         )}
 
@@ -107,23 +147,21 @@ export default async function HomePage() {
           <>
             {/* Risk Zone */}
             <div className="mb-8">
-              <RiskZone currentRate={currentRate} rateThreshold={rateThreshold} />
-            </div>
-
-            {/* Trap Manager */}
-            <div className="mb-8">
-              <TrapManager
-                farmId={String(farm.id)}
-                traps={trapsForManager}
-                rateThreshold={rateThreshold}
-              />
+              <RiskZone averageRate={averageRate} />
             </div>
 
             {/* Trend Chart */}
             <div className="card mb-8">
-              <h2 className="text-lg font-semibold mb-4">Rate Trend</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                Rate Trend
+                {selectedTrapId !== null && (
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({trapsForSelector.find((t) => t.id === selectedTrapId)?.name})
+                  </span>
+                )}
+              </h2>
               {observations.length > 0 ? (
-                <TrendChart observations={observations} rateThreshold={rateThreshold} />
+                <TrendChart observations={observations} />
               ) : (
                 <div className="text-center py-16 text-gray-500">
                   No observations yet. Add your first observation to see the trend.
@@ -134,13 +172,20 @@ export default async function HomePage() {
             {/* Recent Observations */}
             <div className="card">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Recent Observations</h2>
+                <h2 className="text-lg font-semibold">
+                  Recent Observations
+                  {selectedTrapId !== null && (
+                    <span className="ml-2 text-sm font-normal text-gray-500">
+                      ({trapsForSelector.find((t) => t.id === selectedTrapId)?.name})
+                    </span>
+                  )}
+                </h2>
                 {recentObservations.length > 0 && (
                   <span className="text-sm text-gray-500">Last {recentObservations.length} entries</span>
                 )}
               </div>
               {recentObservations.length > 0 ? (
-                <ObservationList observations={recentObservations} rateThreshold={rateThreshold} />
+                <ObservationList observations={recentObservations} />
               ) : (
                 <div className="text-center py-12 text-gray-500">
                   No observations yet.{' '}

@@ -13,12 +13,14 @@ import {
 } from 'recharts'
 import type { ObservationWithRelationsAndRate } from '@/lib/payload-client'
 
+// Fixed thresholds for risk levels
+const DANGER_THRESHOLD = 2
+
 interface TrendChartProps {
   observations: ObservationWithRelationsAndRate[]
-  rateThreshold: number
 }
 
-export function TrendChart({ observations, rateThreshold }: TrendChartProps) {
+export function TrendChart({ observations }: TrendChartProps) {
   // Sort observations by date ascending and filter out those without rates
   const sorted = [...observations]
     .filter((obs) => obs.rate !== null)
@@ -27,11 +29,10 @@ export function TrendChart({ observations, rateThreshold }: TrendChartProps) {
   // Format data for chart with timestamp for proper time scaling
   const chartData = sorted.map((obs) => {
     const rate = obs.rate ?? 0
-    const percentage = (rate / rateThreshold) * 100
 
     let severity: 'safe' | 'warning' | 'danger' = 'safe'
-    if (percentage >= 100) severity = 'danger'
-    else if (percentage >= 80) severity = 'warning'
+    if (rate > 2) severity = 'danger'
+    else if (rate >= 1) severity = 'warning'
 
     return {
       timestamp: new Date(obs.date).getTime(),
@@ -137,12 +138,12 @@ export function TrendChart({ observations, rateThreshold }: TrendChartProps) {
             }}
           />
           <ReferenceLine
-            y={rateThreshold}
+            y={DANGER_THRESHOLD}
             stroke="#ef4444"
             strokeDasharray="5 5"
             strokeWidth={2}
             label={{
-              value: `Threshold: ${rateThreshold}/day`,
+              value: `Threshold: ${DANGER_THRESHOLD}/day`,
               position: 'right',
               fill: '#ef4444',
               fontSize: 12,

@@ -3,20 +3,27 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createObservation } from '@/lib/api-client'
-import type { Farm, PestType } from '@/payload-types'
+import type { Farm, PestType, Trap } from '@/payload-types'
+
+interface TrapWithFarm extends Trap {
+  farm: Farm & { pestType: PestType }
+}
+
+interface LastObservationInfo {
+  date: string
+  daysSince: number
+}
 
 interface ObservationFormProps {
-  farms: Farm[]
-  pestTypes: PestType[]
-  defaultFarmId?: string
-  defaultPestTypeId?: string
+  traps: TrapWithFarm[]
+  defaultTrapId?: string
+  lastObservation?: LastObservationInfo | null
 }
 
 export function ObservationForm({
-  farms,
-  pestTypes,
-  defaultFarmId,
-  defaultPestTypeId,
+  traps,
+  defaultTrapId,
+  lastObservation,
 }: ObservationFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -24,8 +31,7 @@ export function ObservationForm({
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     count: '',
-    farm: defaultFarmId || '',
-    pestType: defaultPestTypeId || '',
+    trap: defaultTrapId || '',
     notes: '',
   })
 
@@ -38,8 +44,7 @@ export function ObservationForm({
       await createObservation({
         date: formData.date,
         count: parseInt(formData.count, 10),
-        farm: formData.farm,
-        pestType: formData.pestType,
+        trap: formData.trap,
         notes: formData.notes || undefined,
       })
 
@@ -51,6 +56,26 @@ export function ObservationForm({
       setLoading(false)
     }
   }
+
+  const formatLastObservationDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  // Group traps by farm for display
+  const trapsByFarm = traps.reduce((acc, trap) => {
+    const farmName = typeof trap.farm === 'object' ? trap.farm.name : 'Unknown Farm'
+    if (!acc[farmName]) {
+      acc[farmName] = []
+    }
+    acc[farmName].push(trap)
+    return acc
+  }, {} as Record<string, TrapWithFarm[]>)
+
+  const farmNames = Object.keys(trapsByFarm)
+  const hasMutlipleFarms = farmNames.length > 1
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -70,7 +95,7 @@ export function ObservationForm({
 
       <div>
         <label htmlFor="count" className="label">
-          Trap Count
+          New Insects Since Last Check
         </label>
         <input
           type="number"
@@ -80,47 +105,49 @@ export function ObservationForm({
           value={formData.count}
           onChange={(e) => setFormData({ ...formData, count: e.target.value })}
           className="input"
-          placeholder="Number of pests caught"
+          placeholder="How many additional insects?"
         />
+        <p className="text-sm text-gray-500 mt-1">
+          Count only the new insects caught since your last observation.
+        </p>
+        {lastObservation && (
+          <p className="text-sm text-blue-600 mt-1">
+            Last checked: {formatLastObservationDate(lastObservation.date)} ({lastObservation.daysSince} days ago)
+          </p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="farm" className="label">
-          Farm
+        <label htmlFor="trap" className="label">
+          Trap
         </label>
         <select
-          id="farm"
+          id="trap"
           required
-          value={formData.farm}
-          onChange={(e) => setFormData({ ...formData, farm: e.target.value })}
+          value={formData.trap}
+          onChange={(e) => setFormData({ ...formData, trap: e.target.value })}
           className="input"
         >
-          <option value="">Select a farm</option>
-          {farms.map((farm) => (
-            <option key={String(farm.id)} value={String(farm.id)}>
-              {farm.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="pestType" className="label">
-          Pest Type
-        </label>
-        <select
-          id="pestType"
-          required
-          value={formData.pestType}
-          onChange={(e) => setFormData({ ...formData, pestType: e.target.value })}
-          className="input"
-        >
-          <option value="">Select a pest type</option>
-          {pestTypes.map((pest) => (
-            <option key={String(pest.id)} value={String(pest.id)}>
-              {pest.name} (Threshold: {pest.threshold})
-            </option>
-          ))}
+          <option value="">Select a trap</option>
+          {hasMutlipleFarms ? (
+            // Group by farm when multiple farms exist
+            farmNames.map((farmName) => (
+              <optgroup key={farmName} label={farmName}>
+                {trapsByFarm[farmName].map((trap) => (
+                  <option key={String(trap.id)} value={String(trap.id)}>
+                    {trap.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+          ) : (
+            // Flat list when single farm
+            traps.map((trap) => (
+              <option key={String(trap.id)} value={String(trap.id)}>
+                {trap.name}
+              </option>
+            ))
+          )}
         </select>
       </div>
 

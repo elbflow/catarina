@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     farms: Farm;
+    traps: Trap;
     'pest-types': PestType;
     'pest-observations': PestObservation;
     'payload-kv': PayloadKv;
@@ -82,6 +83,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     farms: FarmsSelect<false> | FarmsSelect<true>;
+    traps: TrapsSelect<false> | TrapsSelect<true>;
     'pest-types': PestTypesSelect<false> | PestTypesSelect<true>;
     'pest-observations': PestObservationsSelect<false> | PestObservationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -172,7 +174,10 @@ export interface Media {
 export interface Farm {
   id: number;
   name: string;
-  crop: 'apple' | 'pecan' | 'grape' | 'berry';
+  /**
+   * The pest type being monitored at this farm
+   */
+  pestType: number | PestType;
   /**
    * Optional location for future use
    */
@@ -189,13 +194,28 @@ export interface PestType {
   name: string;
   crop: 'apple' | 'pecan' | 'grape' | 'berry';
   /**
-   * Number of pests per trap that triggers action
+   * Daily rate that triggers warning
    */
-  threshold: number;
+  rateThreshold: number;
   /**
    * Optional description of the pest
    */
   description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "traps".
+ */
+export interface Trap {
+  id: number;
+  name: string;
+  farm: number | Farm;
+  /**
+   * Inactive traps are excluded from rate calculations
+   */
+  isActive?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -207,11 +227,14 @@ export interface PestObservation {
   id: number;
   date: string;
   /**
-   * Number of pests caught in trap
+   * Additional insects caught since last observation
    */
   count: number;
-  farm: number | Farm;
-  pestType: number | PestType;
+  /**
+   * Marks when the trap was set up or reset (count should be 0)
+   */
+  isBaseline?: boolean | null;
+  trap: number | Trap;
   /**
    * Optional notes about this observation
    */
@@ -258,6 +281,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'farms';
         value: number | Farm;
+      } | null)
+    | ({
+        relationTo: 'traps';
+        value: number | Trap;
       } | null)
     | ({
         relationTo: 'pest-types';
@@ -355,8 +382,19 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface FarmsSelect<T extends boolean = true> {
   name?: T;
-  crop?: T;
+  pestType?: T;
   location?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "traps_select".
+ */
+export interface TrapsSelect<T extends boolean = true> {
+  name?: T;
+  farm?: T;
+  isActive?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -367,7 +405,7 @@ export interface FarmsSelect<T extends boolean = true> {
 export interface PestTypesSelect<T extends boolean = true> {
   name?: T;
   crop?: T;
-  threshold?: T;
+  rateThreshold?: T;
   description?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -379,8 +417,8 @@ export interface PestTypesSelect<T extends boolean = true> {
 export interface PestObservationsSelect<T extends boolean = true> {
   date?: T;
   count?: T;
-  farm?: T;
-  pestType?: T;
+  isBaseline?: T;
+  trap?: T;
   notes?: T;
   photo?: T;
   updatedAt?: T;

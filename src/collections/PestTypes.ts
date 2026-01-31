@@ -4,7 +4,7 @@ export const PestTypes: CollectionConfig = {
   slug: 'pest-types',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'crop', 'threshold', 'createdAt'],
+    defaultColumns: ['name', 'crop', 'rateThreshold', 'createdAt'],
   },
   access: {
     read: () => true, // Public read for V1
@@ -32,14 +32,14 @@ export const PestTypes: CollectionConfig = {
       defaultValue: 'apple',
     },
     {
-      name: 'threshold',
+      name: 'rateThreshold',
       type: 'number',
       required: true,
-      label: 'Action Threshold',
+      label: 'Rate Threshold (insects/day)',
       admin: {
-        description: 'Number of pests per trap that triggers action',
+        description: 'Daily rate that triggers warning',
       },
-      defaultValue: 5,
+      defaultValue: 2,
     },
     {
       name: 'description',

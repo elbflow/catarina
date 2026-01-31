@@ -4,11 +4,11 @@ export const Farms: CollectionConfig = {
   slug: 'farms',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'crop', 'createdAt'],
+    defaultColumns: ['name', 'pestType', 'createdAt'],
   },
   access: {
-    read: () => true, // Public read for V1
-    create: () => true, // Allow creation for demo
+    read: () => true,
+    create: () => true,
     update: () => true,
     delete: () => true,
   },
@@ -20,16 +20,14 @@ export const Farms: CollectionConfig = {
       label: 'Farm Name',
     },
     {
-      name: 'crop',
-      type: 'select',
+      name: 'pestType',
+      type: 'relationship',
+      relationTo: 'pest-types',
       required: true,
-      options: [
-        { label: 'Apple', value: 'apple' },
-        { label: 'Pecan', value: 'pecan' },
-        { label: 'Grape', value: 'grape' },
-        { label: 'Berry', value: 'berry' },
-      ],
-      defaultValue: 'apple',
+      label: 'Pest Type',
+      admin: {
+        description: 'The pest type being monitored at this farm',
+      },
     },
     {
       name: 'location',

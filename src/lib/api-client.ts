@@ -4,21 +4,17 @@
 export interface CreateObservationData {
   date: string
   count: number
-  farm: string
-  pestType: string
+  trap: string
   notes?: string
 }
 
 export async function createObservation(data: CreateObservationData) {
-  // Use current origin to avoid port mismatch issues
   const apiUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
-  // Convert string IDs to numbers for PostgreSQL
   const payload = {
     date: data.date,
     count: data.count,
-    farm: parseInt(data.farm, 10),
-    pestType: parseInt(data.pestType, 10),
+    trap: parseInt(data.trap, 10),
     notes: data.notes,
   }
 
@@ -33,6 +29,36 @@ export async function createObservation(data: CreateObservationData) {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to create observation' }))
     throw new Error(error.message || 'Failed to create observation')
+  }
+
+  return response.json()
+}
+
+export interface CreateTrapData {
+  name: string
+  farm: string
+}
+
+export async function createTrap(data: CreateTrapData) {
+  const apiUrl = typeof window !== 'undefined' ? window.location.origin : ''
+
+  const payload = {
+    name: data.name,
+    farm: parseInt(data.farm, 10),
+    isActive: true,
+  }
+
+  const response = await fetch(`${apiUrl}/api/traps`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to create trap' }))
+    throw new Error(error.message || 'Failed to create trap')
   }
 
   return response.json()

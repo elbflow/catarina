@@ -4,10 +4,10 @@ export const PestObservations: CollectionConfig = {
   slug: 'pest-observations',
   admin: {
     useAsTitle: 'id',
-    defaultColumns: ['date', 'count', 'farm', 'pestType', 'createdAt'],
+    defaultColumns: ['date', 'count', 'isBaseline', 'trap', 'createdAt'],
   },
   access: {
-    read: () => true, // Public read for V1
+    read: () => true,
     create: () => true,
     update: () => true,
     delete: () => true,
@@ -28,25 +28,27 @@ export const PestObservations: CollectionConfig = {
       name: 'count',
       type: 'number',
       required: true,
-      label: 'Trap Count',
+      label: 'New Insects Since Last Check',
       admin: {
-        description: 'Number of pests caught in trap',
+        description: 'Additional insects caught since last observation',
       },
       min: 0,
     },
     {
-      name: 'farm',
-      type: 'relationship',
-      relationTo: 'farms',
-      required: true,
-      label: 'Farm',
+      name: 'isBaseline',
+      type: 'checkbox',
+      label: 'Trap Setup',
+      defaultValue: false,
+      admin: {
+        description: 'Marks when the trap was set up or reset (count should be 0)',
+      },
     },
     {
-      name: 'pestType',
+      name: 'trap',
       type: 'relationship',
-      relationTo: 'pest-types',
+      relationTo: 'traps',
       required: true,
-      label: 'Pest Type',
+      label: 'Trap',
     },
     {
       name: 'notes',

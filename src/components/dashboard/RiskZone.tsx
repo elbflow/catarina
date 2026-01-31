@@ -1,14 +1,14 @@
 'use client'
 
-import { calculateRiskLevel } from '@/lib/risk-calculator'
+import { calculateRateRisk } from '@/lib/risk-calculator'
 
 interface RiskZoneProps {
-  currentCount: number
-  threshold: number
+  currentRate: number
+  rateThreshold: number
 }
 
-export function RiskZone({ currentCount, threshold }: RiskZoneProps) {
-  const risk = calculateRiskLevel(currentCount, threshold)
+export function RiskZone({ currentRate, rateThreshold }: RiskZoneProps) {
+  const risk = calculateRateRisk(currentRate, rateThreshold)
 
   const getRiskStyles = () => {
     switch (risk.level) {
@@ -58,20 +58,22 @@ export function RiskZone({ currentCount, threshold }: RiskZoneProps) {
           </div>
         </div>
         <div className="text-right">
-          <div className={`text-3xl font-bold ${styles.text}`}>{currentCount}</div>
-          <div className={`text-xs opacity-60 ${styles.text}`}>of {threshold}</div>
+          <div className={`text-3xl font-bold ${styles.text}`}>{currentRate.toFixed(1)}</div>
+          <div className={`text-xs opacity-60 ${styles.text}`}>per day</div>
         </div>
       </div>
-      
+
       {/* Progress bar */}
-      <div className={`w-full ${styles.progressBg} rounded-full h-3`}>
-        <div
-          className={`h-3 rounded-full ${styles.indicator} transition-all duration-500 ease-out`}
-          style={{ width: `${Math.min(risk.percentage, 100)}%` }}
-        />
-      </div>
-      <div className={`text-xs mt-2 ${styles.text} opacity-70`}>
-        {Math.round(risk.percentage)}% of action threshold
+      <div className="flex items-center gap-3">
+        <div className={`flex-1 ${styles.progressBg} rounded-full h-3`}>
+          <div
+            className={`h-3 rounded-full ${styles.indicator} transition-all duration-500 ease-out`}
+            style={{ width: `${Math.min(risk.ratePercentage, 100)}%` }}
+          />
+        </div>
+        <div className={`text-sm font-medium ${styles.text}`}>
+          {currentRate.toFixed(1)}/{rateThreshold} per day
+        </div>
       </div>
     </div>
   )

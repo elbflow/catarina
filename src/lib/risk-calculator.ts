@@ -127,21 +127,113 @@ export function filterObservationsToLastNDays<T extends { date: string }>(
 
 /**
  * Calculate average daily rate for last N days.
- * Sum of counts in the period divided by number of days.
+ * 
+ * This function correctly accounts for time gaps between observations.
+ * Each observation's rate applies to the days it covers (from previous observation + 1 to this observation date).
+ * For each day in the window, we find the observation that covers it and use its rate.
+ * 
+ * @param observations - Observations with calculated rates (must have rate and daysSincePrevious)
+ * @param days - Number of days to look back (e.g., 3 for 3-day average)
+ * @returns Average daily rate over the period, or 0 if no observations cover the period
  */
-export function calculateAverageRateForLastNDays<T extends { date: string; count: number }>(
+export function calculateAverageRateForLastNDays<T extends { date: string; rate: number | null }>(
   observations: T[],
   days: number,
 ): number {
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
-  cutoff.setHours(0, 0, 0, 0)
-  const recentObs = observations.filter((obs) => new Date(obs.date) >= cutoff)
+  if (observations.length === 0) return 0
 
-  if (recentObs.length === 0) return 0
+  // Calculate the window start date (N days ago at midnight)
+  const windowEnd = new Date()
+  windowEnd.setHours(23, 59, 59, 999) // End of today
+  const windowStart = new Date()
+  windowStart.setDate(windowStart.getDate() - days)
+  windowStart.setHours(0, 0, 0, 0) // Start of day N days ago
 
-  const totalCount = recentObs.reduce((sum, obs) => sum + obs.count, 0)
-  return totalCount / days
+  // Sort observations by date ascending (oldest first) to process chronologically
+  const sorted = [...observations].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  )
+
+  // Filter to observations that could be relevant (within or before the window)
+  // We need observations before the window too, as they may cover early days
+  const relevantObs = sorted.filter((obs) => {
+    const obsDate = new Date(obs.date)
+    // Include observations on or before window end, and observations that might cover window start
+    return obsDate <= windowEnd
+  })
+
+  if (relevantObs.length === 0) return 0
+
+  // For each day in the window, find the rate that applies to it
+  // An observation covers a day if the day falls within the period from
+  // (previous observation date + 1) to (this observation date)
+  const dailyRates: number[] = []
+
+  for (let dayOffset = 0; dayOffset < days; dayOffset++) {
+    const currentDay = new Date(windowStart)
+    currentDay.setDate(currentDay.getDate() + dayOffset)
+    currentDay.setHours(0, 0, 0, 0)
+    const currentDayTime = currentDay.getTime()
+
+    // Find the observation that covers this day
+    // An observation covers a day if the day falls within:
+    // (previous observation date + 1) to (this observation date)
+    let coveringObs: T | null = null
+
+    // Find observations whose date is >= current day (they could cover this day)
+    // Then check if their coverage period includes the current day
+    for (let i = 0; i < relevantObs.length; i++) {
+      const obs = relevantObs[i]
+      const obsDate = new Date(obs.date)
+      obsDate.setHours(0, 0, 0, 0)
+      const obsDateTime = obsDate.getTime()
+
+      // Skip if observation date is before current day (can't cover future days)
+      if (obsDateTime < currentDayTime) continue
+
+      // Determine the coverage period for this observation
+      // Coverage starts the day after the previous observation
+      let coverageStartTime: number
+      if (i === 0) {
+        // First observation covers from window start (or its own date if after window start)
+        coverageStartTime = Math.min(obsDateTime, windowStart.getTime())
+      } else {
+        // Coverage starts the day after the previous observation (could be baseline)
+        const prevObs = relevantObs[i - 1]
+        const prevObsDate = new Date(prevObs.date)
+        prevObsDate.setHours(0, 0, 0, 0)
+        coverageStartTime = prevObsDate.getTime() + 24 * 60 * 60 * 1000 // +1 day
+        // Coverage can't start before the window start
+        coverageStartTime = Math.max(coverageStartTime, windowStart.getTime())
+      }
+
+      // Check if current day falls within this observation's coverage period
+      // The day must be >= coverage start and <= observation date
+      if (currentDayTime >= coverageStartTime && currentDayTime <= obsDateTime) {
+        // Only use this observation if it has a valid rate
+        if (obs.rate !== null && obs.rate !== undefined) {
+          coveringObs = obs
+          break
+        }
+        // If it's a baseline (no rate), continue to find the next observation that covers this day
+      }
+    }
+
+    // If we found a covering observation with a rate, use it
+    // Otherwise, use 0 (no observation covers this day)
+    if (coveringObs && coveringObs.rate !== null) {
+      dailyRates.push(coveringObs.rate)
+    } else {
+      // No observation covers this day - treat as 0 rate
+      dailyRates.push(0)
+    }
+  }
+
+  // Calculate average of daily rates
+  if (dailyRates.length === 0) return 0
+
+  const sum = dailyRates.reduce((acc, rate) => acc + rate, 0)
+  return sum / dailyRates.length
 }
 
 // Legacy function - kept for backwards compatibility during migration

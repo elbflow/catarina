@@ -97,6 +97,24 @@ export const Farms: CollectionConfig = {
         description: 'Optional location for future use',
       },
     },
+    {
+      name: 'lat',
+      type: 'number',
+      label: 'Latitude',
+      admin: {
+        description: 'GPS latitude coordinate (e.g., 24.0530)',
+        step: 0.0001,
+      },
+    },
+    {
+      name: 'lng',
+      type: 'number',
+      label: 'Longitude',
+      admin: {
+        description: 'GPS longitude coordinate (e.g., -104.7785)',
+        step: 0.0001,
+      },
+    },
   ],
   timestamps: true,
 }

@@ -183,6 +183,14 @@ export interface Farm {
    * Optional location for future use
    */
   location?: string | null;
+  /**
+   * GPS latitude coordinate (e.g., 24.0530)
+   */
+  lat?: number | null;
+  /**
+   * GPS longitude coordinate (e.g., -104.7785)
+   */
+  lng?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -451,6 +459,8 @@ export interface FarmsSelect<T extends boolean = true> {
   pestType?: T;
   coop?: T;
   location?: T;
+  lat?: T;
+  lng?: T;
   updatedAt?: T;
   createdAt?: T;
 }

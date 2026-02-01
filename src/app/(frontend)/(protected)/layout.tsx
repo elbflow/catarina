@@ -1,4 +1,5 @@
 import { AppShell } from '@/components/layout/AppShell'
+import { ChatProvider } from '@/components/chat'
 import { getAuthHeaders } from '@/lib/auth-helpers'
 import config from '@/payload.config'
 import { redirect } from 'next/navigation'
@@ -58,5 +59,34 @@ export default async function ProtectedLayout({
     redirect('/onboarding')
   }
 
-  return <AppShell user={freshUser}>{children}</AppShell>
+  // Get first farm ID for chat context
+  const firstTenant = freshUser.tenants?.[0]
+  const farmId = typeof firstTenant?.tenant === 'object'
+    ? firstTenant.tenant.id
+    : firstTenant?.tenant
+
+  // Fetch traps for the user's farm (for AI Scout chat)
+  let trapsForChat: Array<{ id: number; name: string }> = []
+  if (farmId) {
+    const trapsResult = await payload.find({
+      collection: 'traps',
+      where: {
+        farm: { equals: farmId },
+        isActive: { equals: true },
+      },
+      limit: 100,
+      user: freshUser,
+      overrideAccess: false,
+    })
+    trapsForChat = trapsResult.docs.map((trap) => ({
+      id: trap.id,
+      name: trap.name,
+    }))
+  }
+
+  return (
+    <ChatProvider farmId={farmId || 0} traps={trapsForChat}>
+      <AppShell user={freshUser}>{children}</AppShell>
+    </ChatProvider>
+  )
 }

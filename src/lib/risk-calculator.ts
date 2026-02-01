@@ -14,6 +14,7 @@ export interface RateRisk {
   currentRate: number
   ratePercentage: number
   message: string
+  actionMessage: string
 }
 
 /**
@@ -79,16 +80,20 @@ export function calculateObservationRates(
 export function calculateRateRisk(averageRate: number): RateRisk {
   let level: RiskLevel = 'safe'
   let message = ''
+  let actionMessage = ''
 
   if (averageRate > 2) {
     level = 'danger'
     message = `Action required: Average rate (${averageRate.toFixed(1)}/day) exceeds 2/day`
+    actionMessage = 'Action window now. Coordinate treatment timing.'
   } else if (averageRate >= 1) {
     level = 'warning'
     message = `Warning: Average rate (${averageRate.toFixed(1)}/day) between 1-2/day`
+    actionMessage = 'Activity rising. Prepare biological controls and increase scouting.'
   } else {
     level = 'safe'
     message = `Safe: Average rate (${averageRate.toFixed(1)}/day) below 1/day`
+    actionMessage = 'Activity is low. Continue regular monitoring.'
   }
 
   return {
@@ -96,6 +101,7 @@ export function calculateRateRisk(averageRate: number): RateRisk {
     currentRate: averageRate,
     ratePercentage: (averageRate / 2) * 100,
     message,
+    actionMessage,
   }
 }
 

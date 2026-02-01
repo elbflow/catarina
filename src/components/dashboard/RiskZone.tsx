@@ -53,7 +53,7 @@ export function RiskZone({ averageRate }: RiskZoneProps) {
           <span className="text-2xl">{styles.icon}</span>
           <div>
             <h3 className={`text-lg font-semibold ${styles.text}`}>{styles.label}</h3>
-            <p className={`text-sm opacity-80 ${styles.text}`}>{risk.message}</p>
+            <p className={`text-sm opacity-80 ${styles.text}`}>{risk.actionMessage}</p>
           </div>
         </div>
         <div className="text-right">

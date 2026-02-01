@@ -221,9 +221,7 @@ export async function getAggregatedFarmRate(
     const observations = await getObservationsWithRatesForTrap(trap.id, user)
     // Calculate 3-day average rate for this trap
     const trapAverageRate = calculateAverageRateForLastNDays(observations, 3)
-    if (trapAverageRate > 0) {
-      trapRates.push(trapAverageRate)
-    }
+    trapRates.push(trapAverageRate)
   }
 
   if (trapRates.length === 0) {

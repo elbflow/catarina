@@ -3,7 +3,6 @@
 import { createFarm } from '@/lib/auth-client'
 import { LocationSearch } from '@/components/forms/LocationSearch'
 import type { PestType } from '@/payload-types'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 interface OnboardingFormProps {
@@ -11,7 +10,6 @@ interface OnboardingFormProps {
 }
 
 export function OnboardingForm({ pestTypes }: OnboardingFormProps) {
-  const _router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -49,30 +47,18 @@ export function OnboardingForm({ pestTypes }: OnboardingFormProps) {
     }
 
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OnboardingForm.tsx:49',message:'Before createFarm call',data:{formData},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      const result = await createFarm({
+      await createFarm({
         name: formData.name,
         pestType: parseInt(formData.pestType, 10),
         location: formData.location || undefined,
         lat: formData.lat,
         lng: formData.lng,
       })
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OnboardingForm.tsx:57',message:'After createFarm call',data:{result},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       // Wait a bit for the hook to complete, then refresh and redirect
       await new Promise(resolve => setTimeout(resolve, 500))
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OnboardingForm.tsx:63',message:'Before redirect',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       // Force a hard refresh to get updated user session
       window.location.href = '/'
     } catch (err) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OnboardingForm.tsx:69',message:'createFarm error',data:{error:err instanceof Error ? err.message : String(err)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       setError(err instanceof Error ? err.message : 'Failed to create farm')
     } finally {
       setLoading(false)

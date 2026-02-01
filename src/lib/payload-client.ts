@@ -399,21 +399,60 @@ export async function getFarms(
 // ============ CO-OP FUNCTIONS ============
 
 /**
+ * Verify that a user is an active member of a co-op.
+ * Returns true if the user is a superadmin or has an active membership in the co-op.
+ */
+export async function isUserCoopMember(
+  coopId: string | number,
+  user: User | null,
+): Promise<boolean> {
+  if (!user) return false
+
+  // Superadmins have access to all co-ops
+  if (user.isSuperAdmin) return true
+
+  const payload = await getPayload({ config })
+
+  // Check for active membership in this co-op
+  const membership = await payload.find({
+    collection: 'coop-memberships',
+    where: {
+      and: [
+        { user: { equals: user.id } },
+        { coop: { equals: coopId } },
+        { status: { equals: 'active' } },
+      ],
+    },
+    limit: 1,
+    depth: 0,
+    // No user/overrideAccess needed - this is an admin check
+  })
+
+  return membership.docs.length > 0
+}
+
+/**
  * Get all farms in a co-op.
- * Uses overrideAccess: true because co-op membership implies permission
- * to see aggregated data from all member farms.
+ * SECURITY: Verifies user is an active co-op member before returning data.
+ * Uses overrideAccess: true after verification because user may not own all farms.
  */
 export async function getCoopFarms(
   coopId: string | number,
   user: User | null,
 ): Promise<Array<Farm & { pestType: PestType }>> {
+  // Verify user has permission to access this co-op's data
+  const hasAccess = await isUserCoopMember(coopId, user)
+  if (!hasAccess) {
+    return []
+  }
+
   const payload = await getPayload({ config })
   const result = await payload.find({
     collection: 'farms',
     where: { coop: { equals: coopId } },
     depth: 1,
-    user,
-    overrideAccess: true, // Co-op members can see aggregated data
+    // No user param with overrideAccess: true - we've verified access manually
+    overrideAccess: true,
   })
   return result.docs as Array<Farm & { pestType: PestType }>
 }
@@ -421,23 +460,34 @@ export async function getCoopFarms(
 /**
  * Get aggregated observations for all farms in a co-op.
  * Returns observations from all traps across all farms in the co-op.
- * Uses overrideAccess: true because co-op membership implies permission
- * to see aggregated metrics from all member farms.
+ * SECURITY: Verifies user is an active co-op member before returning data.
+ * Uses overrideAccess: true after verification because user may not own all farms.
  */
 export async function getObservationsWithRatesForCoop(
   coopId: string | number,
   user: User | null,
 ): Promise<ObservationWithRelationsAndRate[]> {
-  const payload = await getPayload({ config })
-
-  // Get all farms in the co-op
-  const farms = await getCoopFarms(coopId, user)
-
-  if (farms.length === 0) {
+  // Verify user has permission to access this co-op's data
+  const hasAccess = await isUserCoopMember(coopId, user)
+  if (!hasAccess) {
     return []
   }
 
-  const farmIds = farms.map((f) => f.id).filter((id) => id != null)
+  const payload = await getPayload({ config })
+
+  // Get all farms in the co-op (access already verified above)
+  const farms = await payload.find({
+    collection: 'farms',
+    where: { coop: { equals: coopId } },
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  if (farms.docs.length === 0) {
+    return []
+  }
+
+  const farmIds = farms.docs.map((f) => f.id).filter((id) => id != null)
 
   if (farmIds.length === 0) {
     return []
@@ -450,8 +500,7 @@ export async function getObservationsWithRatesForCoop(
       farm: { in: farmIds },
     },
     depth: 0,
-    user,
-    overrideAccess: true, // Co-op members can see aggregated data
+    overrideAccess: true,
   })
 
   if (traps.docs.length === 0) {
@@ -473,8 +522,7 @@ export async function getObservationsWithRatesForCoop(
     depth: 3,
     sort: '-date',
     limit: 1000,
-    user,
-    overrideAccess: true, // Co-op members can see aggregated data
+    overrideAccess: true,
   })
 
   const observations = result.docs as ObservationWithRelations[]

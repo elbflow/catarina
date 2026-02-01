@@ -296,7 +296,7 @@ export function expandObservationsToDailyRates<
   // Extend minDate backward based on first rate-bearing observation's daysSincePrevious
   // This ensures days covered by the first observation's rate are included
   const firstWithRate = sorted.find((obs) => obs.rate !== null && obs.rate !== undefined)
-  if (firstWithRate?.daysSincePrevious !== null && firstWithRate.daysSincePrevious !== undefined && firstWithRate.daysSincePrevious > 0) {
+  if (firstWithRate && firstWithRate.daysSincePrevious !== null && firstWithRate.daysSincePrevious !== undefined && firstWithRate.daysSincePrevious > 0) {
     const firstDate = new Date(firstWithRate.date)
     firstDate.setHours(0, 0, 0, 0)
     const extendedMin = new Date(firstDate)
@@ -433,7 +433,7 @@ export function aggregateObservationsByDate<
   }
 
   // Aggregate each date group
-  return Array.from(byDate.entries()).map(([dateKey, obsGroup]) => {
+  return Array.from(byDate.entries()).map(([_dateKey, obsGroup]) => {
     // If only one observation for this date, return it as-is
     if (obsGroup.length === 1) {
       return obsGroup[0]

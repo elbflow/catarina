@@ -1,10 +1,10 @@
-import type { Coop, Farm, PestObservation, PestType, Trap, User } from '@/payload-types'
+import type { Farm, PestObservation, PestType, Trap, User } from '@/payload-types'
 import config from '@/payload.config'
 import { getPayload, type Where } from 'payload'
 import {
-  calculateObservationRates,
-  calculateAverageRateForLastNDays,
-  type ObservationWithRate,
+    calculateAverageRateForLastNDays,
+    calculateObservationRates,
+    type ObservationWithRate,
 } from './risk-calculator'
 
 export interface TrapWithRelations extends Trap {

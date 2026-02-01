@@ -8,7 +8,7 @@ interface ViewToggleProps {
   selectedView: 'farm' | 'coop'
 }
 
-export function ViewToggle({ coopName, farmName, selectedView }: ViewToggleProps) {
+export function ViewToggle({ coopName, farmName: _farmName, selectedView }: ViewToggleProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 

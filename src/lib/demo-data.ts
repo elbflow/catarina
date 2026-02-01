@@ -14,11 +14,13 @@ export async function flushDatabase() {
   const observations = await payload.find({
     collection: 'pest-observations',
     limit: 10000,
+    overrideAccess: true,
   })
   for (const obs of observations.docs) {
     await payload.delete({
       collection: 'pest-observations',
       id: obs.id,
+      overrideAccess: true,
     })
   }
   console.log(`Deleted ${observations.totalDocs} observations`)
@@ -27,11 +29,13 @@ export async function flushDatabase() {
   const traps = await payload.find({
     collection: 'traps',
     limit: 10000,
+    overrideAccess: true,
   })
   for (const trap of traps.docs) {
     await payload.delete({
       collection: 'traps',
       id: trap.id,
+      overrideAccess: true,
     })
   }
   console.log(`Deleted ${traps.totalDocs} traps`)
@@ -40,11 +44,13 @@ export async function flushDatabase() {
   const memberships = await payload.find({
     collection: 'coop-memberships',
     limit: 10000,
+    overrideAccess: true,
   })
   for (const membership of memberships.docs) {
     await payload.delete({
       collection: 'coop-memberships',
       id: membership.id,
+      overrideAccess: true,
     })
   }
   console.log(`Deleted ${memberships.totalDocs} coop memberships`)
@@ -53,11 +59,13 @@ export async function flushDatabase() {
   const users = await payload.find({
     collection: 'users',
     limit: 10000,
+    overrideAccess: true,
   })
   for (const user of users.docs) {
     await payload.delete({
       collection: 'users',
       id: user.id,
+      overrideAccess: true,
     })
   }
   console.log(`Deleted ${users.totalDocs} users`)
@@ -66,11 +74,13 @@ export async function flushDatabase() {
   const farms = await payload.find({
     collection: 'farms',
     limit: 10000,
+    overrideAccess: true,
   })
   for (const farm of farms.docs) {
     await payload.delete({
       collection: 'farms',
       id: farm.id,
+      overrideAccess: true,
     })
   }
   console.log(`Deleted ${farms.totalDocs} farms`)
@@ -79,11 +89,13 @@ export async function flushDatabase() {
   const coops = await payload.find({
     collection: 'coops',
     limit: 10000,
+    overrideAccess: true,
   })
   for (const coop of coops.docs) {
     await payload.delete({
       collection: 'coops',
       id: coop.id,
+      overrideAccess: true,
     })
   }
   console.log(`Deleted ${coops.totalDocs} coops`)
@@ -92,11 +104,13 @@ export async function flushDatabase() {
   const pestTypes = await payload.find({
     collection: 'pest-types',
     limit: 10000,
+    overrideAccess: true,
   })
   for (const pestType of pestTypes.docs) {
     await payload.delete({
       collection: 'pest-types',
       id: pestType.id,
+      overrideAccess: true,
     })
   }
   console.log(`Deleted ${pestTypes.totalDocs} pest types`)

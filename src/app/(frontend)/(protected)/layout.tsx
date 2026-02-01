@@ -1,6 +1,7 @@
 import { AppShell } from '@/components/layout/AppShell'
 import { ChatProvider } from '@/components/chat'
 import { getAuthHeaders } from '@/lib/auth-helpers'
+import type { Farm, PestType } from '@/payload-types'
 import config from '@/payload.config'
 import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
@@ -52,11 +53,25 @@ export default async function ProtectedLayout({
     redirect('/onboarding')
   }
 
-  // Get first farm ID for chat context
+  // Get first farm for header display and chat context
   const firstTenant = freshUser.tenants?.[0]
-  const farmId = typeof firstTenant?.tenant === 'object'
-    ? firstTenant.tenant.id
-    : firstTenant?.tenant
+  const farmFromTenant = typeof firstTenant?.tenant === 'object' ? firstTenant.tenant : null
+  const farmId = farmFromTenant?.id ?? (typeof firstTenant?.tenant === 'number' ? firstTenant.tenant : undefined)
+
+  // Fetch farm with pestType populated for AppShell header
+  let farm: (Farm & { pestType: PestType }) | undefined = undefined
+  if (farmId) {
+    try {
+      farm = await payload.findByID({
+        collection: 'farms',
+        id: farmId,
+        depth: 1, // Populate pestType
+        overrideAccess: true,
+      }) as Farm & { pestType: PestType }
+    } catch (error) {
+      console.error('Error fetching farm:', error)
+    }
+  }
 
   // Fetch traps for the user's farm (for AI Scout chat)
   // Using overrideAccess since we already authenticated and filter by user's farmId
@@ -79,7 +94,7 @@ export default async function ProtectedLayout({
 
   return (
     <ChatProvider farmId={farmId || 0} traps={trapsForChat}>
-      <AppShell user={freshUser}>{children}</AppShell>
+      <AppShell user={freshUser} farm={farm}>{children}</AppShell>
     </ChatProvider>
   )
 }

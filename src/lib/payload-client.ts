@@ -19,9 +19,12 @@ function sanitizeUserForPayload(user: User | null): User | null {
 
   // If user has tenants, filter out any with null/undefined tenant values
   if (user.tenants && Array.isArray(user.tenants)) {
-    return {
-      ...user,
-      tenants: user.tenants.filter(t => t.tenant != null),
+    const hasInvalidTenants = user.tenants.some(t => t.tenant == null)
+    if (hasInvalidTenants) {
+      return {
+        ...user,
+        tenants: user.tenants.filter(t => t.tenant != null),
+      }
     }
   }
 

@@ -6,36 +6,67 @@ import type { RiskLevel } from './risk-calculator'
 
 const BASE_STYLES = `
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       line-height: 1.6;
-      color: #333;
+      color: #111827;
       max-width: 600px;
       margin: 0 auto;
       padding: 20px;
-      background-color: #f5f5f5;
+      background-color: #fafafa;
     }
     .container {
       background-color: #ffffff;
-      border-radius: 8px;
-      padding: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     .header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
       text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid #e5e5e5;
+      padding: 40px 30px;
+      margin: 0;
     }
     .logo {
+      font-size: 32px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .header-subtitle {
+      color: rgba(255, 255, 255, 0.85);
+      margin: 0;
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .content {
+      padding: 30px;
+      margin: 0;
+    }
+    .content h1 {
+      color: #111827;
       font-size: 28px;
-      font-weight: bold;
-      color: #2c5530;
-      margin-bottom: 10px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+    .content p {
+      color: #374151;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 16px 0;
     }
     .risk-badge {
       display: inline-block;
-      padding: 8px 16px;
+      padding: 10px 20px;
       border-radius: 20px;
       font-weight: 600;
       font-size: 14px;
@@ -44,70 +75,116 @@ const BASE_STYLES = `
       margin: 20px 0;
     }
     .risk-safe {
-      background-color: #d4edda;
-      color: #155724;
+      background-color: #dcfce7;
+      color: #166534;
     }
     .risk-warning {
-      background-color: #fff3cd;
-      color: #856404;
+      background-color: #fef3c7;
+      color: #92400e;
     }
     .risk-danger {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-    .content {
-      margin: 20px 0;
+      background-color: #fee2e2;
+      color: #991b1b;
     }
     .action-message {
-      background-color: #f8f9fa;
-      border-left: 4px solid #2c5530;
-      padding: 15px;
-      margin: 20px 0;
-      border-radius: 4px;
+      background-color: #f9fafb;
+      border-left: 4px solid #2563eb;
+      padding: 20px;
+      margin: 24px 0;
+      border-radius: 8px;
+    }
+    .action-message strong {
+      color: #111827;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .action-message p {
+      color: #6b7280;
+      margin: 0;
+    }
+    .action-message ul {
+      margin: 12px 0;
+      padding-left: 24px;
+      color: #374151;
+    }
+    .action-message li {
+      margin: 8px 0;
     }
     .details {
-      background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 4px;
-      margin: 20px 0;
+      background-color: #f9fafb;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 24px 0;
+      border: 1px solid #e5e7eb;
     }
     .details-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #e5e5e5;
+      padding: 12px 0;
+      border-bottom: 1px solid #e5e7eb;
     }
     .details-row:last-child {
       border-bottom: none;
     }
     .details-label {
       font-weight: 600;
-      color: #666;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .details-value {
+      color: #111827;
+      font-weight: 500;
+      text-align: right;
     }
     .button {
       display: inline-block;
-      padding: 12px 24px;
-      background-color: #2c5530;
+      padding: 14px 32px;
+      background-color: #2563eb;
       color: #ffffff;
       text-decoration: none;
-      border-radius: 4px;
-      margin: 20px 0;
+      border-radius: 8px;
+      margin: 24px 0;
       font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+      transition: background-color 0.2s;
+    }
+    .button:hover {
+      background-color: #1d4ed8;
     }
     .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #e5e5e5;
+      background-color: #f9fafb;
+      padding: 24px 30px;
       text-align: center;
-      color: #666;
+      color: #6b7280;
       font-size: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer p {
+      margin: 8px 0;
+      color: #6b7280;
+    }
+    .footer small {
+      color: #9ca3af;
+      font-size: 12px;
     }
     @media only screen and (max-width: 600px) {
       body {
         padding: 10px;
       }
-      .container {
-        padding: 20px;
+      .header {
+        padding: 30px 20px;
+      }
+      .content {
+        padding: 24px 20px;
+      }
+      .content h1 {
+        font-size: 24px;
+      }
+      .button {
+        padding: 12px 24px;
+        font-size: 15px;
       }
     }
   </style>
@@ -151,12 +228,12 @@ export function getWelcomeEmailTemplate(userName: string, userEmail: string): { 
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">🌾 Catarina</div>
-      <p style="color: #666; margin: 0;">Integrated Pest Management</p>
+      <div class="logo">🐞 Catarina</div>
+      <p class="header-subtitle">Integrated Pest Management</p>
     </div>
     
     <div class="content">
-      <h1 style="color: #2c5530; margin-top: 0;">Welcome to Catarina!</h1>
+      <h1>Welcome to Catarina!</h1>
       
       <p>Hi ${userName || 'there'},</p>
       
@@ -164,7 +241,7 @@ export function getWelcomeEmailTemplate(userName: string, userEmail: string): { 
       
       <div class="action-message">
         <strong>What you can do:</strong>
-        <ul style="margin: 10px 0; padding-left: 20px;">
+        <ul>
           <li>Track pest observations across your farms</li>
           <li>Monitor risk levels with real-time alerts</li>
           <li>Get notified when action is needed</li>
@@ -178,16 +255,14 @@ export function getWelcomeEmailTemplate(userName: string, userEmail: string): { 
         </a>
       </div>
       
-      <p style="margin-top: 30px; color: #666; font-size: 14px;">
+      <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
         If you have any questions, feel free to reach out. Happy scouting!
       </p>
     </div>
     
     <div class="footer">
       <p>Catarina IPM Platform</p>
-      <p style="font-size: 12px; color: #999;">
-        This is an automated message. Please do not reply to this email.
-      </p>
+      <small>This is an automated message. Please do not reply to this email.</small>
     </div>
   </div>
 </body>
@@ -263,12 +338,12 @@ export function getRiskAlertEmailTemplate(data: RiskAlertData): { html: string; 
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">🌾 Catarina</div>
-      <p style="color: #666; margin: 0;">Integrated Pest Management</p>
+      <div class="logo">🐞 Catarina</div>
+      <p class="header-subtitle">Integrated Pest Management</p>
     </div>
     
     <div class="content">
-      <h1 style="color: #2c5530; margin-top: 0;">${mainMessage}</h1>
+      <h1>${mainMessage}</h1>
       
       <p>Hi ${userName},</p>
       
@@ -283,39 +358,39 @@ export function getRiskAlertEmailTemplate(data: RiskAlertData): { html: string; 
       <div class="details">
         <div class="details-row">
           <span class="details-label">Farm:</span>
-          <span>${farmName}</span>
+          <span class="details-value">${farmName}</span>
         </div>
         <div class="details-row">
           <span class="details-label">Trap:</span>
-          <span>${trapName}</span>
+          <span class="details-value">${trapName}</span>
         </div>
         <div class="details-row">
           <span class="details-label">Pest Type:</span>
-          <span>${pestTypeName}</span>
+          <span class="details-value">${pestTypeName}</span>
         </div>
         <div class="details-row">
           <span class="details-label">Observation Date:</span>
-          <span>${new Date(observationDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+          <span class="details-value">${new Date(observationDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
         </div>
         <div class="details-row">
           <span class="details-label">Count:</span>
-          <span>${observationCount} insects</span>
+          <span class="details-value">${observationCount} insects</span>
         </div>
         <div class="details-row">
           <span class="details-label">Average Rate:</span>
-          <span><strong>${currentRate.toFixed(2)}/day</strong></span>
+          <span class="details-value"><strong>${currentRate.toFixed(2)}/day</strong></span>
         </div>
         ${previousRiskLevel !== null ? `
         <div class="details-row">
           <span class="details-label">Previous Risk:</span>
-          <span>${getRiskLabel(previousRiskLevel)}</span>
+          <span class="details-value">${getRiskLabel(previousRiskLevel)}</span>
         </div>
         ` : ''}
       </div>
       
       <div class="action-message">
         <strong>${message}</strong>
-        <p style="margin: 10px 0 0 0;">${actionMessage}</p>
+        <p>${actionMessage}</p>
       </div>
       
       <div style="text-align: center;">
@@ -324,16 +399,14 @@ export function getRiskAlertEmailTemplate(data: RiskAlertData): { html: string; 
         </a>
       </div>
       
-      <p style="margin-top: 30px; color: #666; font-size: 14px;">
+      <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
         Monitor your traps regularly to stay ahead of pest activity.
       </p>
     </div>
     
     <div class="footer">
       <p>Catarina IPM Platform</p>
-      <p style="font-size: 12px; color: #999;">
-        This is an automated message. Please do not reply to this email.
-      </p>
+      <small>This is an automated message. Please do not reply to this email.</small>
     </div>
   </div>
 </body>

@@ -4,7 +4,9 @@ import { getPayload, type Where } from 'payload'
 import {
     calculateAverageRateForLastNDays,
     calculateObservationRates,
+    calculateRateRisk,
     type ObservationWithRate,
+    type RiskLevel,
 } from './risk-calculator'
 
 export interface TrapWithRelations extends Trap {
@@ -18,6 +20,15 @@ export interface ObservationWithRelations extends PestObservation {
 export interface ObservationWithRelationsAndRate extends ObservationWithRelations {
   daysSincePrevious: number | null
   rate: number | null
+}
+
+export interface FarmWithRisk {
+  id: number
+  name: string
+  lat: number | null
+  lng: number | null
+  averageRate: number
+  riskLevel: RiskLevel
 }
 
 // ============ TRAP FUNCTIONS ============
@@ -473,6 +484,106 @@ export async function getCoopFarms(
     overrideAccess: true,
   })
   return result.docs as Array<Farm & { pestType: PestType }>
+}
+
+/**
+ * Get all farms in a co-op with their calculated risk levels.
+ * SECURITY: Verifies user is an active co-op member before returning data.
+ */
+export async function getCoopFarmsWithRisk(
+  coopId: string | number,
+  user: User | null,
+): Promise<FarmWithRisk[]> {
+  // Verify user has permission to access this co-op's data
+  const hasAccess = await isUserCoopMember(coopId, user)
+  if (!hasAccess) {
+    return []
+  }
+
+  const payload = await getPayload({ config })
+
+  // Get all farms in the co-op
+  const farms = await payload.find({
+    collection: 'farms',
+    where: { coop: { equals: coopId } },
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  if (farms.docs.length === 0) {
+    return []
+  }
+
+  const results: FarmWithRisk[] = []
+
+  for (const farm of farms.docs) {
+    // Get all traps for this farm
+    const traps = await payload.find({
+      collection: 'traps',
+      where: {
+        and: [
+          { farm: { equals: farm.id } },
+          { isActive: { equals: true } },
+        ],
+      },
+      depth: 0,
+      overrideAccess: true,
+    })
+
+    let farmAverageRate = 0
+
+    if (traps.docs.length > 0) {
+      const trapRates: number[] = []
+
+      for (const trap of traps.docs) {
+        // Get observations for this trap
+        const observations = await payload.find({
+          collection: 'pest-observations',
+          where: { trap: { equals: trap.id } },
+          depth: 0,
+          sort: '-date',
+          limit: 100,
+          overrideAccess: true,
+        })
+
+        if (observations.docs.length > 0) {
+          // Calculate rates for this trap's observations
+          const obsWithRates = observations.docs.map((obs, index, arr) => {
+            if (index === arr.length - 1 || obs.isBaseline) {
+              return { ...obs, rate: null, daysSincePrevious: null }
+            }
+            const prevObs = arr[index + 1] // arr is sorted descending
+            const currentDate = new Date(obs.date)
+            const prevDate = new Date(prevObs.date)
+            const daysDiff = (currentDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
+            const daysSincePrevious = Math.max(daysDiff, 0.5)
+            const rate = obs.count / daysSincePrevious
+            return { ...obs, rate, daysSincePrevious }
+          })
+
+          const trapRate = calculateAverageRateForLastNDays(obsWithRates, 3)
+          trapRates.push(trapRate)
+        }
+      }
+
+      if (trapRates.length > 0) {
+        farmAverageRate = trapRates.reduce((sum, r) => sum + r, 0) / trapRates.length
+      }
+    }
+
+    const risk = calculateRateRisk(farmAverageRate)
+
+    results.push({
+      id: farm.id,
+      name: farm.name,
+      lat: farm.lat ?? null,
+      lng: farm.lng ?? null,
+      averageRate: farmAverageRate,
+      riskLevel: risk.level,
+    })
+  }
+
+  return results
 }
 
 /**

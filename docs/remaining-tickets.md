@@ -5,7 +5,6 @@
 This document tracks the remaining work items for the hackathon. Items are prioritized by impact and execution order.
 
 ---
-
 ## Table of Contents
 
 ### Completed

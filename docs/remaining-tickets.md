@@ -13,8 +13,7 @@ This document tracks the remaining work items for the hackathon. Items are prior
 
 ### Priority 1: Core Features for Demo
 1. [Co-op Map with Heatmap Visualization](#1-co-op-map-with-heatmap-visualization)
-2. [Observation Detail Page (View/Edit/Delete)](#2-observation-detail-page-vieweditdelete)
-3. [Demo Script & Video](#3-demo-script--video)
+2. [Demo Script & Video](#3-demo-script--video)
 
 ### Priority 2: High-Impact Enhancements
 4. [AI Photo → Observation Autofill](#4-ai-photo--observation-autofill)
@@ -40,6 +39,7 @@ This document tracks the remaining work items for the hackathon. Items are prior
 - [x] **Authentication** — Login, signup, route protection, demo accounts
 - [x] **Observation Entry** — Manual form with date, count, trap, notes
 - [x] **Demo Data Seed** — 5 farms, 15 traps, 235 observations, 7 users
+- [x] **Observation Detail Page (View/Edit/Delete)** — Detail page at `/observations/[id]` with inline edit mode, delete confirmation, breadcrumbs, and clickable list rows
 
 ---
 
@@ -119,84 +119,7 @@ Please ask me these questions so we can align on the implementation approach bef
 
 ---
 
-### 2. Observation Detail Page (View/Edit/Delete)
-**Goal:** Allow users to view, edit, or delete individual observations
-
-**Tasks:**
-- [ ] Create observation detail page at `/observations/[id]`
-- [ ] Display full observation details (date, count, trap, notes, photo if any)
-- [ ] Add "Edit" button → opens edit form (reuse ObservationForm)
-- [ ] Add "Delete" button with confirmation dialog
-- [ ] Handle access control (only owner or admin can edit/delete)
-- [ ] Add navigation back to dashboard
-
-**UX Notes:**
-- Confirmation dialog for delete: "Are you sure you want to delete this observation? This action cannot be undone."
-- Success/error feedback after edit or delete
-- Consider making observation rows in the dashboard list clickable
-
-**Files to modify:**
-- New page: `src/app/(frontend)/(protected)/observations/[id]/page.tsx`
-- New component: `src/components/forms/EditObservationForm.tsx` (or reuse existing)
-- New component: `src/components/ui/ConfirmDialog.tsx`
-- Update: `src/components/dashboard/ObservationList.tsx` — Make rows clickable
-
-<details>
-<summary><strong>Agent Prompt</strong></summary>
-
-```
-# Task: Observation Detail Page with Edit/Delete
-
-## Context
-You are working on Catarina, an IPM app for pest observation tracking. Currently, users can add observations but cannot view details, edit, or delete them. We need a detail page for individual observations.
-
-## Your Mission
-Implement the observation detail/edit/delete functionality, but first align with me on the UX and technical approach.
-
-## Before You Start, Please Ask Me About:
-
-### Page Layout & Navigation
-- Should clicking an observation in the dashboard list navigate to the detail page? Or use a modal/drawer?
-- What information should be prominently displayed on the detail page?
-- How should users navigate back? (Back button? Breadcrumbs? Both?)
-
-### Edit Flow
-- Should editing happen inline on the detail page, or navigate to a separate edit page?
-- Should we reuse the existing `ObservationForm` or create a dedicated edit form?
-- What fields should be editable? (All of them? Or restrict some like trap/date?)
-
-### Delete Flow
-- What should the confirmation dialog say and look like?
-- After successful delete, where should we redirect? (Dashboard? Previous page?)
-- Should we support "soft delete" or permanent deletion?
-
-### Access Control
-- Who can view an observation? (Only the creator? Anyone in the same farm? Co-op members?)
-- Who can edit? (Creator only? Admins too? Technicians?)
-- Who can delete? (Same as edit? More restrictive?)
-
-### Error Handling
-- What happens if someone tries to access an observation that doesn't exist?
-- What happens if someone tries to edit/delete without permission?
-
-### Visual Design
-- Should the detail page match the dashboard card style or be more detailed?
-- Any specific UI patterns you want to follow for the confirmation dialog?
-
-## Reference Files
-- `src/components/dashboard/ObservationList.tsx` — Current observation list
-- `src/components/forms/ObservationForm.tsx` — Existing form (might reuse)
-- `src/collections/PestObservations.ts` — Observation schema and access control
-- `src/lib/api-client.ts` — API client patterns
-
-Please ask me these questions so we can design the right experience before implementing.
-```
-
-</details>
-
----
-
-### 3. Demo Script & Video
+### 2. Demo Script & Video
 **Goal:** 2-minute demo that clearly shows problem → signal → action
 
 **Tasks:**
@@ -573,13 +496,12 @@ This is a stretch goal — let's discuss if it's worth the complexity.
 | # | Ticket | Est. Time | Priority | Impact |
 |---|--------|-----------|----------|--------|
 | 1 | Co-op Map + Heatmap | 3-4 hrs | P1 | High — visual wow factor |
-| 2 | Observation Detail/Edit/Delete | 2 hrs | P1 | High — core UX |
-| 3 | Demo Script + Video | 1 hr | P1 | Critical — presentation |
-| 4 | AI Photo Autofill | 2-3 hrs | P2 | High — AI differentiation |
-| 5 | Email Notifications | 2-3 hrs | P2 | Medium — engagement |
-| 6 | Dashboard View Toggle | 1-2 hrs | P3 | Medium |
-| 7 | Risk Explanation Tooltip | 15 min | P3 | Low |
-| 8 | NL Risk Narrative | 1-2 hrs | P3 | Low |
+| 2 | Demo Script + Video | 1 hr | P1 | Critical — presentation |
+| 3 | AI Photo Autofill | 2-3 hrs | P2 | High — AI differentiation |
+| 4 | Email Notifications | 2-3 hrs | P2 | Medium — engagement |
+| 5 | Dashboard View Toggle | 1-2 hrs | P3 | Medium |
+| 6 | Risk Explanation Tooltip | 15 min | P3 | Low |
+| 7 | NL Risk Narrative | 1-2 hrs | P3 | Low |
 
 ---
 

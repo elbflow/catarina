@@ -60,7 +60,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: google('gemini-2.0-flash'),
+    model: google('gemini-2.5-flash'),
     system: SYSTEM_PROMPT + `\n\nFarmer's traps: ${traps.map((t) => `"${t.name}" (ID: ${t.id})`).join(', ')}`,
     messages: await convertToModelMessages(messages),
     tools: {

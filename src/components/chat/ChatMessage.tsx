@@ -6,8 +6,34 @@ interface ChatMessageProps {
   message: UIMessage
 }
 
+const TOOL_MESSAGES: Record<string, string> = {
+  createObservation: '📝 Logging observation...',
+  getRiskStatus: '📊 Checking risk status...',
+  listTraps: '🪤 Looking up your traps...',
+}
+
+function getToolName(type: string): string | null {
+  if (type.startsWith('tool-')) {
+    return type.slice(5) // Remove 'tool-' prefix
+  }
+  return null
+}
+
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user'
+
+  // Check if this message has any renderable content
+  const hasRenderableContent = message.parts.some((part) => {
+    if (part.type === 'text' && part.text.trim()) return true
+    if (part.type === 'file' && part.mediaType?.startsWith('image/')) return true
+    const toolName = getToolName(part.type)
+    if (toolName && TOOL_MESSAGES[toolName]) return true
+    return false
+  })
+
+  if (!hasRenderableContent) {
+    return null
+  }
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
@@ -35,6 +61,17 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 className="max-w-full rounded-lg mt-2"
               />
             )
+          }
+          const toolName = getToolName(part.type)
+          if (toolName) {
+            const toolMessage = TOOL_MESSAGES[toolName]
+            if (toolMessage) {
+              return (
+                <p key={index} className="text-sm text-gray-500 italic">
+                  {toolMessage}
+                </p>
+              )
+            }
           }
           return null
         })}

@@ -6,6 +6,7 @@ import { ViewToggle } from '@/components/dashboard/ViewToggle'
 import { EmptyState } from '@/components/layout/EmptyState'
 import { getAuthHeaders } from '@/lib/auth-helpers'
 import {
+    getCoopFarmsWithRisk,
     getFarms,
     getObservationsWithRatesForFarm,
     getObservationsWithRatesForTrap,
@@ -22,6 +23,7 @@ import config from '@/payload.config'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import { Suspense } from 'react'
+import { CoopMapWrapper } from '@/components/dashboard/CoopMapWrapper'
 
 interface PageProps {
   searchParams: Promise<{ trap?: string; page?: string; pageSize?: string; view?: string }>
@@ -93,6 +95,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       })
       coop = coopDoc as Coop
     }
+  }
+
+  // Get farm risk data for map (only in co-op view)
+  let coopFarmsWithRisk: Awaited<ReturnType<typeof getCoopFarmsWithRisk>> = []
+  if (selectedView === 'coop' && coopId !== null) {
+    coopFarmsWithRisk = await getCoopFarmsWithRisk(coopId, user)
   }
 
   // Get trap info for the trap selector
@@ -223,6 +231,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               coopName={coop?.name}
             />
           </div>
+
+          {/* Co-op Map (only in co-op view) */}
+          {selectedView === 'coop' && coopFarmsWithRisk.length > 0 && (
+            <div className="card mb-8">
+              <h2 className="text-lg font-semibold mb-4">
+                Farm Locations
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({coopFarmsWithRisk.length} farms)
+                </span>
+              </h2>
+              <CoopMapWrapper farms={coopFarmsWithRisk} />
+            </div>
+          )}
 
           {/* Trend Chart */}
           <div className="card mb-8">

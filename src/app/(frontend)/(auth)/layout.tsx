@@ -9,7 +9,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   const { user } = await payload.auth({ headers: await getAuthHeaders() })
 
   if (user) {
-    redirect('/')
+    redirect('/dashboard')
   }
 
   return (

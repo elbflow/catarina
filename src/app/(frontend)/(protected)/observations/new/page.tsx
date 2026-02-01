@@ -47,7 +47,7 @@ export default async function NewObservationPage() {
           <p className="text-gray-600 mb-6">
             Please add at least one trap from the dashboard before recording observations.
           </p>
-          <Link href="/" className="btn-primary">
+          <Link href="/dashboard" className="btn-primary">
             Go to Dashboard
           </Link>
         </div>

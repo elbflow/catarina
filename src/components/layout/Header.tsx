@@ -14,7 +14,7 @@ export function Header({ user, farmName, pestTypeName }: HeaderProps) {
       <div className="max-w-6xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-2xl hover:opacity-80 transition-opacity">
+            <Link href="/dashboard" className="text-2xl hover:opacity-80 transition-opacity">
               🐞
             </Link>
             <div>

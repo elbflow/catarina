@@ -10,7 +10,7 @@ export default async function OnboardingPage() {
 
   // Only farmers should see this
   if (!authUser || authUser.role !== 'farmer') {
-    redirect('/')
+    redirect('/dashboard')
   }
 
   // Fetch fresh user data to check for farms (in case farm was just created)
@@ -23,7 +23,7 @@ export default async function OnboardingPage() {
 
   // Already has farms? Go to dashboard
   if (freshUser.tenants && freshUser.tenants.length > 0) {
-    redirect('/')
+    redirect('/dashboard')
   }
 
   // Get pest types for dropdown

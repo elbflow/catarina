@@ -1,5 +1,5 @@
-import type { Payload, User } from 'payload'
-import type { RiskLevel } from './risk-calculator'
+import type { Payload } from 'payload'
+import type { User } from '@/payload-types'
 import { getRiskAlertEmailTemplate, getWelcomeEmailTemplate, type RiskAlertData } from './email-templates'
 
 const isDevelopment = process.env.NODE_ENV === 'development'

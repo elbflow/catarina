@@ -1,10 +1,10 @@
 import { getUser } from '@/access'
 import { getFarmUsers, sendRiskAlert } from '@/lib/email-service'
 import {
-  calculateAverageRateForLastNDays,
-  calculateObservationRates,
-  calculateRateRisk,
-  type RiskLevel,
+    calculateAverageRateForLastNDays,
+    calculateObservationRates,
+    calculateRateRisk,
+    type RiskLevel,
 } from '@/lib/risk-calculator'
 import type { CollectionConfig } from 'payload'
 import { APIError } from 'payload'
@@ -144,9 +144,9 @@ export const PestObservations: CollectionConfig = {
             const observationsWithRates = calculateObservationRates(
               observations.docs.map((obs) => ({
                 id: obs.id,
-                date: typeof obs.date === 'string' ? obs.date : obs.date.toISOString().split('T')[0],
+                date: obs.date,
                 count: obs.count,
-                isBaseline: obs.isBaseline,
+                isBaseline: obs.isBaseline ?? undefined,
               })),
             )
 
@@ -185,7 +185,7 @@ export const PestObservations: CollectionConfig = {
                   ratePercentage: riskResult.ratePercentage,
                   message: riskResult.message,
                   actionMessage: riskResult.actionMessage,
-                  observationDate: typeof doc.date === 'string' ? doc.date : doc.date.toISOString().split('T')[0],
+                  observationDate: doc.date,
                   observationCount: doc.count,
                 })
               }

@@ -98,11 +98,12 @@ export async function getFarmUsers(
   try {
     // Find all users who have access to this farm
     // Users have a tenants array field with { tenant: farmId } objects
+    // Query the nested tenant field within the tenants array
     const users = await payload.find({
       collection: 'users',
       where: {
-        tenants: {
-          contains: farmId,
+        'tenants.tenant': {
+          equals: farmId,
         },
       },
       depth: 0,
@@ -110,16 +111,7 @@ export async function getFarmUsers(
       overrideAccess: true, // Need admin access to query all users
     })
 
-    // Filter to users that actually have this farm in their tenants
-    const farmUsers = users.docs.filter((user) => {
-      if (!user.tenants || !Array.isArray(user.tenants)) return false
-      return user.tenants.some((tenant: any) => {
-        const tenantId = typeof tenant === 'object' ? tenant.tenant : tenant
-        return tenantId === farmId || tenantId === String(farmId)
-      })
-    })
-
-    return farmUsers as User[]
+    return users.docs as User[]
   } catch (error) {
     console.error('Failed to get farm users:', error)
     return []

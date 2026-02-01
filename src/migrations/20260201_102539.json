@@ -2,6 +2,116 @@
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.users_tenants": {
+      "name": "users_tenants",
+      "schema": "",
+      "columns": {
+        "_order": {
+          "name": "_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_parent_id": {
+          "name": "_parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "users_tenants_order_idx": {
+          "name": "users_tenants_order_idx",
+          "columns": [
+            {
+              "expression": "_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_tenants_parent_id_idx": {
+          "name": "users_tenants_parent_id_idx",
+          "columns": [
+            {
+              "expression": "_parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_tenants_tenant_idx": {
+          "name": "users_tenants_tenant_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "users_tenants_tenant_id_farms_id_fk": {
+          "name": "users_tenants_tenant_id_farms_id_fk",
+          "tableFrom": "users_tenants",
+          "tableTo": "farms",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "users_tenants_parent_id_fk": {
+          "name": "users_tenants_parent_id_fk",
+          "tableFrom": "users_tenants",
+          "tableTo": "users",
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.users_sessions": {
       "name": "users_sessions",
       "schema": "",
@@ -99,6 +209,27 @@
           "type": "serial",
           "primaryKey": true,
           "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "enum_users_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'farmer'"
+        },
+        "is_super_admin": {
+          "name": "is_super_admin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -367,17 +498,33 @@
           "primaryKey": false,
           "notNull": true
         },
-        "crop": {
-          "name": "crop",
-          "type": "enum_farms_crop",
-          "typeSchema": "public",
+        "pest_type_id": {
+          "name": "pest_type_id",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'apple'"
+          "notNull": true
+        },
+        "coop_id": {
+          "name": "coop_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "location": {
           "name": "location",
           "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lat": {
+          "name": "lat",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lng": {
+          "name": "lng",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": false
         },
@@ -397,6 +544,36 @@
         }
       },
       "indexes": {
+        "farms_pest_type_idx": {
+          "name": "farms_pest_type_idx",
+          "columns": [
+            {
+              "expression": "pest_type_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "farms_coop_idx": {
+          "name": "farms_coop_idx",
+          "columns": [
+            {
+              "expression": "coop_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "farms_updated_at_idx": {
           "name": "farms_updated_at_idx",
           "columns": [
@@ -428,7 +605,188 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "farms_pest_type_id_pest_types_id_fk": {
+          "name": "farms_pest_type_id_pest_types_id_fk",
+          "tableFrom": "farms",
+          "tableTo": "pest_types",
+          "columnsFrom": [
+            "pest_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "farms_coop_id_coops_id_fk": {
+          "name": "farms_coop_id_coops_id_fk",
+          "tableFrom": "farms",
+          "tableTo": "coops",
+          "columnsFrom": [
+            "coop_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.traps": {
+      "name": "traps",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "farm_id": {
+          "name": "farm_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "current_risk_level": {
+          "name": "current_risk_level",
+          "type": "enum_traps_current_risk_level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'safe'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "traps_tenant_idx": {
+          "name": "traps_tenant_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "traps_farm_idx": {
+          "name": "traps_farm_idx",
+          "columns": [
+            {
+              "expression": "farm_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "traps_updated_at_idx": {
+          "name": "traps_updated_at_idx",
+          "columns": [
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "traps_created_at_idx": {
+          "name": "traps_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "traps_tenant_id_farms_id_fk": {
+          "name": "traps_tenant_id_farms_id_fk",
+          "tableFrom": "traps",
+          "tableTo": "farms",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "traps_farm_id_farms_id_fk": {
+          "name": "traps_farm_id_farms_id_fk",
+          "tableFrom": "traps",
+          "tableTo": "farms",
+          "columnsFrom": [
+            "farm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -536,6 +894,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "date": {
           "name": "date",
           "type": "timestamp(3) with time zone",
@@ -555,14 +919,8 @@
           "notNull": false,
           "default": false
         },
-        "farm_id": {
-          "name": "farm_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "pest_type_id": {
-          "name": "pest_type_id",
+        "trap_id": {
+          "name": "trap_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -595,11 +953,11 @@
         }
       },
       "indexes": {
-        "pest_observations_farm_idx": {
-          "name": "pest_observations_farm_idx",
+        "pest_observations_tenant_idx": {
+          "name": "pest_observations_tenant_idx",
           "columns": [
             {
-              "expression": "farm_id",
+              "expression": "tenant_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -610,11 +968,11 @@
           "method": "btree",
           "with": {}
         },
-        "pest_observations_pest_type_idx": {
-          "name": "pest_observations_pest_type_idx",
+        "pest_observations_trap_idx": {
+          "name": "pest_observations_trap_idx",
           "columns": [
             {
-              "expression": "pest_type_id",
+              "expression": "trap_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -672,12 +1030,12 @@
         }
       },
       "foreignKeys": {
-        "pest_observations_farm_id_farms_id_fk": {
-          "name": "pest_observations_farm_id_farms_id_fk",
+        "pest_observations_tenant_id_farms_id_fk": {
+          "name": "pest_observations_tenant_id_farms_id_fk",
           "tableFrom": "pest_observations",
           "tableTo": "farms",
           "columnsFrom": [
-            "farm_id"
+            "tenant_id"
           ],
           "columnsTo": [
             "id"
@@ -685,12 +1043,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "pest_observations_pest_type_id_pest_types_id_fk": {
-          "name": "pest_observations_pest_type_id_pest_types_id_fk",
+        "pest_observations_trap_id_traps_id_fk": {
+          "name": "pest_observations_trap_id_traps_id_fk",
           "tableFrom": "pest_observations",
-          "tableTo": "pest_types",
+          "tableTo": "traps",
           "columnsFrom": [
-            "pest_type_id"
+            "trap_id"
           ],
           "columnsTo": [
             "id"
@@ -704,6 +1062,231 @@
           "tableTo": "media",
           "columnsFrom": [
             "photo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.coops": {
+      "name": "coops",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "region": {
+          "name": "region",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "coops_updated_at_idx": {
+          "name": "coops_updated_at_idx",
+          "columns": [
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "coops_created_at_idx": {
+          "name": "coops_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.coop_memberships": {
+      "name": "coop_memberships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "coop_id": {
+          "name": "coop_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "enum_coop_memberships_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "member_role": {
+          "name": "member_role",
+          "type": "enum_coop_memberships_member_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'member'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "coop_memberships_user_idx": {
+          "name": "coop_memberships_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "coop_memberships_coop_idx": {
+          "name": "coop_memberships_coop_idx",
+          "columns": [
+            {
+              "expression": "coop_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "coop_memberships_updated_at_idx": {
+          "name": "coop_memberships_updated_at_idx",
+          "columns": [
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "coop_memberships_created_at_idx": {
+          "name": "coop_memberships_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "coop_memberships_user_id_users_id_fk": {
+          "name": "coop_memberships_user_id_users_id_fk",
+          "tableFrom": "coop_memberships",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "coop_memberships_coop_id_coops_id_fk": {
+          "name": "coop_memberships_coop_id_coops_id_fk",
+          "tableFrom": "coop_memberships",
+          "tableTo": "coops",
+          "columnsFrom": [
+            "coop_id"
           ],
           "columnsTo": [
             "id"
@@ -896,6 +1479,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "traps_id": {
+          "name": "traps_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "pest_types_id": {
           "name": "pest_types_id",
           "type": "integer",
@@ -904,6 +1493,18 @@
         },
         "pest_observations_id": {
           "name": "pest_observations_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "coops_id": {
+          "name": "coops_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "coop_memberships_id": {
+          "name": "coop_memberships_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -1000,6 +1601,21 @@
           "method": "btree",
           "with": {}
         },
+        "payload_locked_documents_rels_traps_id_idx": {
+          "name": "payload_locked_documents_rels_traps_id_idx",
+          "columns": [
+            {
+              "expression": "traps_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "payload_locked_documents_rels_pest_types_id_idx": {
           "name": "payload_locked_documents_rels_pest_types_id_idx",
           "columns": [
@@ -1020,6 +1636,36 @@
           "columns": [
             {
               "expression": "pest_observations_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payload_locked_documents_rels_coops_id_idx": {
+          "name": "payload_locked_documents_rels_coops_id_idx",
+          "columns": [
+            {
+              "expression": "coops_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payload_locked_documents_rels_coop_memberships_id_idx": {
+          "name": "payload_locked_documents_rels_coop_memberships_id_idx",
+          "columns": [
+            {
+              "expression": "coop_memberships_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1084,6 +1730,19 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
+        "payload_locked_documents_rels_traps_fk": {
+          "name": "payload_locked_documents_rels_traps_fk",
+          "tableFrom": "payload_locked_documents_rels",
+          "tableTo": "traps",
+          "columnsFrom": [
+            "traps_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "payload_locked_documents_rels_pest_types_fk": {
           "name": "payload_locked_documents_rels_pest_types_fk",
           "tableFrom": "payload_locked_documents_rels",
@@ -1103,6 +1762,32 @@
           "tableTo": "pest_observations",
           "columnsFrom": [
             "pest_observations_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "payload_locked_documents_rels_coops_fk": {
+          "name": "payload_locked_documents_rels_coops_fk",
+          "tableFrom": "payload_locked_documents_rels",
+          "tableTo": "coops",
+          "columnsFrom": [
+            "coops_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "payload_locked_documents_rels_coop_memberships_fk": {
+          "name": "payload_locked_documents_rels_coop_memberships_fk",
+          "tableFrom": "payload_locked_documents_rels",
+          "tableTo": "coop_memberships",
+          "columnsFrom": [
+            "coop_memberships_id"
           ],
           "columnsTo": [
             "id"
@@ -1417,14 +2102,21 @@
     }
   },
   "enums": {
-    "public.enum_farms_crop": {
-      "name": "enum_farms_crop",
+    "public.enum_users_role": {
+      "name": "enum_users_role",
       "schema": "public",
       "values": [
-        "apple",
-        "pecan",
-        "grape",
-        "berry"
+        "farmer",
+        "technician"
+      ]
+    },
+    "public.enum_traps_current_risk_level": {
+      "name": "enum_traps_current_risk_level",
+      "schema": "public",
+      "values": [
+        "safe",
+        "warning",
+        "danger"
       ]
     },
     "public.enum_pest_types_crop": {
@@ -1435,6 +2127,22 @@
         "pecan",
         "grape",
         "berry"
+      ]
+    },
+    "public.enum_coop_memberships_status": {
+      "name": "enum_coop_memberships_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "active"
+      ]
+    },
+    "public.enum_coop_memberships_member_role": {
+      "name": "enum_coop_memberships_member_role",
+      "schema": "public",
+      "values": [
+        "member",
+        "admin"
       ]
     }
   },
@@ -1448,6 +2156,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "057a047f-d399-460f-8b79-5c91856092ba",
+  "id": "095a214a-fd8a-4a91-bc57-551197ef1608",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

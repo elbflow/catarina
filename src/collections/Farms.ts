@@ -21,9 +21,6 @@ export const Farms: CollectionConfig = {
   hooks: {
     afterChange: [
       async ({ doc, operation, req }) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Farms.ts:hook',message:'afterChange hook called',data:{operation,docId:doc.id,hasUser:!!req.user,isSuperAdmin:req.user?.isSuperAdmin},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         // Only on create, and only for non-admins
         if (operation !== 'create') return doc
         if (!req.user || req.user.isSuperAdmin) return doc
@@ -38,10 +35,6 @@ export const Farms: CollectionConfig = {
             typeof t.tenant === 'number' ? t.tenant : t.tenant!.id,
           )
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Farms.ts:hook',message:'About to update user tenants',data:{userId:user.id,currentFarmIds,newFarmId:doc.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-
         // Add new farm to user's tenants
         await req.payload.update({
           collection: 'users',
@@ -54,10 +47,6 @@ export const Farms: CollectionConfig = {
           },
           req, // Important for transaction
         })
-
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Farms.ts:hook',message:'User tenants updated successfully',data:{userId:user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
 
         return doc
       },

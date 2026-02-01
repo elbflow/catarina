@@ -9,6 +9,25 @@ import {
     type RiskLevel,
 } from './risk-calculator'
 
+/**
+ * Sanitize user object for Payload queries.
+ * Filters out any tenant entries with null/undefined tenant values
+ * to prevent crashes in the multi-tenant plugin's extractID function.
+ */
+function sanitizeUserForPayload(user: User | null): User | null {
+  if (!user) return null
+
+  // If user has tenants, filter out any with null/undefined tenant values
+  if (user.tenants && Array.isArray(user.tenants)) {
+    return {
+      ...user,
+      tenants: user.tenants.filter(t => t.tenant != null),
+    }
+  }
+
+  return user
+}
+
 export interface TrapWithRelations extends Trap {
   farm: Farm
 }
@@ -49,7 +68,7 @@ export async function getTraps(
     where,
     depth: 2,
     sort: 'name',
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 
@@ -65,7 +84,7 @@ export async function getTrap(id: string | number, user: User | null): Promise<T
     collection: 'traps',
     id,
     depth: 2,
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   }) as TrapWithRelations
 }
@@ -89,7 +108,7 @@ export async function createTrap(
       farm: typeof data.farm === 'string' ? parseInt(data.farm, 10) : data.farm,
       isActive: true,
     },
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 }
@@ -113,7 +132,7 @@ export async function getActiveTraps(
     },
     depth: 2,
     sort: 'name',
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 
@@ -135,7 +154,7 @@ export async function getObservationById(
     collection: 'pest-observations',
     id,
     depth: 3,
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   }) as ObservationWithRelations
 }
@@ -154,7 +173,7 @@ export async function getObservationsForTrap(
     where: { trap: { equals: trapId } },
     depth: 3,
     sort: '-date',
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 
@@ -175,7 +194,7 @@ export async function getObservationsForFarm(
     collection: 'traps',
     where: { farm: { equals: farmId } },
     depth: 0,
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 
@@ -198,7 +217,7 @@ export async function getObservationsForFarm(
     depth: 3,
     sort: '-date',
     limit: 1000,
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 
@@ -365,7 +384,7 @@ export async function createObservation(
       notes: data.notes,
       isBaseline: data.isBaseline ?? false,
     },
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 }
@@ -391,7 +410,7 @@ export async function createBaselineObservation(
       isBaseline: true,
       notes: 'Trap set up - starting point for rate calculations',
     },
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 }
@@ -407,7 +426,7 @@ export async function getFarm(
     collection: 'farms',
     id,
     depth: 1,
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   }) as Farm & { pestType: PestType }
 }
@@ -419,7 +438,7 @@ export async function getFarms(
   const result = await payload.find({
     collection: 'farms',
     depth: 1,
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
   return result.docs as Array<Farm & { pestType: PestType }>
@@ -701,7 +720,7 @@ export async function getLatestObservation(
     depth: 3,
     sort: '-date',
     limit: 1,
-    user,
+    user: sanitizeUserForPayload(user),
     overrideAccess: false,
   })
 

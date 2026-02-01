@@ -17,7 +17,7 @@ export default async function ProtectedLayout({
   // #endregion
 
   // Not logged in or invalid user → redirect to login
-  if (!authUser || !authUser.id) {
+  if (!authUser?.id) {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'protected/layout.tsx:auth',message:'No user - redirecting to login',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
     // #endregion
@@ -27,6 +27,11 @@ export default async function ProtectedLayout({
   // SuperAdmin → skip onboarding check
   if (authUser.isSuperAdmin) {
     return <AppShell user={authUser}>{children}</AppShell>
+  }
+
+  // Extra safety check for race conditions
+  if (!authUser.id) {
+    redirect('/login')
   }
 
   // Fetch fresh user data from DB to get latest tenants (in case farm was just created)

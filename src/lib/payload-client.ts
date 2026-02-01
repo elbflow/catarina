@@ -435,7 +435,7 @@ export async function isUserCoopMember(
   coopId: string | number,
   user: User | null,
 ): Promise<boolean> {
-  if (!user) return false
+  if (!user?.id) return false
 
   // Superadmins have access to all co-ops
   if (user.isSuperAdmin) return true
@@ -517,6 +517,9 @@ export async function getCoopFarmsWithRisk(
   const results: FarmWithRisk[] = []
 
   for (const farm of farms.docs) {
+    // Skip farms without valid IDs
+    if (!farm?.id) continue
+
     // Get all traps for this farm
     const traps = await payload.find({
       collection: 'traps',
@@ -536,6 +539,9 @@ export async function getCoopFarmsWithRisk(
       const trapRates: number[] = []
 
       for (const trap of traps.docs) {
+        // Skip traps without valid IDs
+        if (!trap?.id) continue
+
         // Get observations for this trap
         const observations = await payload.find({
           collection: 'pest-observations',

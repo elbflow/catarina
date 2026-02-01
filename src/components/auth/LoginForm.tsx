@@ -21,8 +21,8 @@ export function LoginForm() {
 
     try {
       await login(formData.email, formData.password)
-      router.push('/')
-      router.refresh()
+      // Use window.location for a hard redirect to ensure cookie is sent
+      window.location.href = '/dashboard'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {

@@ -116,7 +116,7 @@ export function TrapSelector({
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+        <div className="absolute left-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
           <div className="p-2">
             {/* All Traps Option */}
             <button

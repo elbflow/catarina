@@ -259,6 +259,10 @@ export interface Trap {
    * Inactive traps are excluded from rate calculations
    */
   isActive?: boolean | null;
+  /**
+   * Current risk level based on recent observations (auto-calculated)
+   */
+  currentRiskLevel?: ('safe' | 'warning' | 'danger') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -473,6 +477,7 @@ export interface TrapsSelect<T extends boolean = true> {
   name?: T;
   farm?: T;
   isActive?: T;
+  currentRiskLevel?: T;
   updatedAt?: T;
   createdAt?: T;
 }

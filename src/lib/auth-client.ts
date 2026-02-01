@@ -73,6 +73,8 @@ export async function createFarm(data: {
   name: string
   pestType: number
   location?: string
+  lat?: number
+  lng?: number
   coop?: number
 }) {
   const res = await fetch(`${API_URL}/api/farms`, {

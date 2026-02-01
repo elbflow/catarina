@@ -1,6 +1,7 @@
 'use client'
 
 import { createFarm } from '@/lib/auth-client'
+import { LocationSearch } from '@/components/forms/LocationSearch'
 import type { PestType } from '@/payload-types'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -18,6 +19,8 @@ export function OnboardingForm({ pestTypes }: OnboardingFormProps) {
     crop: 'apple' as 'apple' | 'pecan' | 'grape' | 'berry',
     pestType: '',
     location: '',
+    lat: undefined as number | undefined,
+    lng: undefined as number | undefined,
   })
 
   // Filter pest types by selected crop
@@ -53,6 +56,8 @@ export function OnboardingForm({ pestTypes }: OnboardingFormProps) {
         name: formData.name,
         pestType: parseInt(formData.pestType, 10),
         location: formData.location || undefined,
+        lat: formData.lat,
+        lng: formData.lng,
       })
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/bd7f8df7-23ce-4a4a-b7d5-0d59316965b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'OnboardingForm.tsx:57',message:'After createFarm call',data:{result},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
@@ -143,17 +148,23 @@ export function OnboardingForm({ pestTypes }: OnboardingFormProps) {
       </div>
 
       <div>
-        <label htmlFor="location" className="label">
-          Location <span className="text-gray-400 font-normal">(Optional)</span>
+        <label className="label">
+          Location <span className="text-gray-400 font-normal">(Optional - enables map view)</span>
         </label>
-        <input
-          type="text"
-          id="location"
-          value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          className="input"
-          placeholder="North Valley"
+        <LocationSearch
+          placeholder="Search for your farm location..."
+          onSelect={(loc) => setFormData({
+            ...formData,
+            location: loc.name,
+            lat: loc.lat,
+            lng: loc.lng,
+          })}
         />
+        {formData.lat && formData.lng && (
+          <p className="text-xs text-green-600 mt-1">
+            Coordinates: {formData.lat.toFixed(4)}, {formData.lng.toFixed(4)}
+          </p>
+        )}
       </div>
 
       {error && (

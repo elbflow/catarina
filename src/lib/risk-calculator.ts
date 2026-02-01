@@ -136,7 +136,9 @@ export function filterObservationsToLastNDays<T extends { date: string }>(
  * @param days - Number of days to look back (e.g., 3 for 3-day average)
  * @returns Average daily rate over the period, or 0 if no observations cover the period
  */
-export function calculateAverageRateForLastNDays<T extends { date: string; rate: number | null }>(
+export function calculateAverageRateForLastNDays<
+  T extends { date: string; rate: number | null; daysSincePrevious?: number | null },
+>(
   observations: T[],
   days: number,
 ): number {
@@ -194,17 +196,30 @@ export function calculateAverageRateForLastNDays<T extends { date: string; rate:
       // Determine the coverage period for this observation
       // Coverage starts the day after the previous observation
       let coverageStartTime: number
-      if (i === 0) {
-        // First observation covers from window start (or its own date if after window start)
-        coverageStartTime = Math.min(obsDateTime, windowStart.getTime())
-      } else {
-        // Coverage starts the day after the previous observation (could be baseline)
+      if (
+        obs.daysSincePrevious !== null &&
+        obs.daysSincePrevious !== undefined &&
+        obs.daysSincePrevious > 0
+      ) {
+        // Use daysSincePrevious to calculate coverage start
+        // Coverage starts the day after the previous observation
+        // prevObsDate = obsDate - daysSincePrevious
+        // coverageStart = prevObsDate + 1 day = obsDate - daysSincePrevious + 1 day
+        const coverageStart = new Date(obsDate)
+        coverageStart.setDate(coverageStart.getDate() - obs.daysSincePrevious + 1)
+        coverageStart.setHours(0, 0, 0, 0)
+        coverageStartTime = Math.max(coverageStart.getTime(), windowStart.getTime())
+      } else if (i > 0) {
+        // Fallback: use previous observation in array (for cases without daysSincePrevious)
         const prevObs = relevantObs[i - 1]
         const prevObsDate = new Date(prevObs.date)
         prevObsDate.setHours(0, 0, 0, 0)
         coverageStartTime = prevObsDate.getTime() + 24 * 60 * 60 * 1000 // +1 day
         // Coverage can't start before the window start
         coverageStartTime = Math.max(coverageStartTime, windowStart.getTime())
+      } else {
+        // First observation with no daysSincePrevious - use window start or its own date
+        coverageStartTime = Math.min(obsDateTime, windowStart.getTime())
       }
 
       // Check if current day falls within this observation's coverage period
@@ -269,8 +284,22 @@ export function expandObservationsToDailyRates<
 
   // Find date range
   const dates = sorted.map((obs) => new Date(obs.date))
-  const minDate = new Date(Math.min(...dates.map((d) => d.getTime())))
+  let minDate = new Date(Math.min(...dates.map((d) => d.getTime())))
   const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())))
+  
+  // Extend minDate backward based on first rate-bearing observation's daysSincePrevious
+  // This ensures days covered by the first observation's rate are included
+  const firstWithRate = sorted.find((obs) => obs.rate !== null && obs.rate !== undefined)
+  if (firstWithRate?.daysSincePrevious !== null && firstWithRate.daysSincePrevious !== undefined && firstWithRate.daysSincePrevious > 0) {
+    const firstDate = new Date(firstWithRate.date)
+    firstDate.setHours(0, 0, 0, 0)
+    const extendedMin = new Date(firstDate)
+    extendedMin.setDate(extendedMin.getDate() - firstWithRate.daysSincePrevious + 1)
+    if (extendedMin.getTime() < minDate.getTime()) {
+      minDate = extendedMin
+    }
+  }
+  
   minDate.setHours(0, 0, 0, 0)
   maxDate.setHours(0, 0, 0, 0)
 
@@ -316,16 +345,25 @@ export function expandObservationsToDailyRates<
 
       // Determine coverage period for this observation
       let coverageStartTime: number
-      if (i === 0) {
-        // First observation covers from its own date (or minDate if before)
-        coverageStartTime = Math.min(obsDateTime, minDate.getTime())
-      } else {
+      if (obs.daysSincePrevious !== null && obs.daysSincePrevious !== undefined && obs.daysSincePrevious > 0) {
+        // Use daysSincePrevious to calculate coverage start
         // Coverage starts the day after the previous observation
+        // prevObsDate = obsDate - daysSincePrevious
+        // coverageStart = prevObsDate + 1 day = obsDate - daysSincePrevious + 1 day
+        const coverageStart = new Date(obsDate)
+        coverageStart.setDate(coverageStart.getDate() - obs.daysSincePrevious + 1)
+        coverageStart.setHours(0, 0, 0, 0)
+        coverageStartTime = Math.max(coverageStart.getTime(), minDate.getTime())
+      } else if (i > 0) {
+        // Fallback: use previous observation in array (for cases without daysSincePrevious)
         const prevObs = sorted[i - 1]
         const prevObsDate = new Date(prevObs.date)
         prevObsDate.setHours(0, 0, 0, 0)
         coverageStartTime = prevObsDate.getTime() + 24 * 60 * 60 * 1000 // +1 day
         coverageStartTime = Math.max(coverageStartTime, minDate.getTime())
+      } else {
+        // First observation with no daysSincePrevious - use its own date
+        coverageStartTime = Math.min(obsDateTime, minDate.getTime())
       }
 
       // Check if current day falls within this observation's coverage period

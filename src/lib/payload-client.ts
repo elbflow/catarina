@@ -112,6 +112,24 @@ export async function getActiveTraps(
 // ============ OBSERVATION FUNCTIONS ============
 
 /**
+ * Get a single observation by ID.
+ */
+export async function getObservationById(
+  id: string | number,
+  user: User | null,
+): Promise<ObservationWithRelations> {
+  const payload = await getPayload({ config })
+
+  return await payload.findByID({
+    collection: 'pest-observations',
+    id,
+    depth: 3,
+    user,
+    overrideAccess: false,
+  }) as ObservationWithRelations
+}
+
+/**
  * Get observations for a specific trap.
  */
 export async function getObservationsForTrap(

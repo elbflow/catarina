@@ -1,6 +1,7 @@
 'use client'
 
 import type { ObservationWithRelationsAndRate } from '@/lib/payload-client'
+import Link from 'next/link'
 import { RateSeverityDot } from './RateSeverityDot'
 
 interface ObservationListProps {
@@ -42,9 +43,10 @@ export function ObservationList({ observations }: ObservationListProps) {
         const rateLabel = obs.rate !== null ? `${obs.rate.toFixed(1)}/day` : null
 
         return (
-          <div
+          <Link
             key={obs.id}
-            className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+            href={`/observations/${obs.id}`}
+            className="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-gray-700 w-16">{date}</span>
@@ -70,7 +72,7 @@ export function ObservationList({ observations }: ObservationListProps) {
               )}
               <RateSeverityDot rate={obs.rate} />
             </div>
-          </div>
+          </Link>
         )
       })}
     </div>

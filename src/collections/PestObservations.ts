@@ -23,15 +23,19 @@ export const PestObservations: CollectionConfig = {
       if (user.isSuperAdmin) return true
       return ['farmer', 'technician'].includes(user.role)
     },
-    // Only superadmins can update (observations are generally immutable)
+    // Farmers and technicians can update observations in their farms (plugin filters by tenant)
     update: ({ req }) => {
       const user = getUser(req)
-      return user?.isSuperAdmin === true
+      if (!user) return false
+      if (user.isSuperAdmin) return true
+      return ['farmer', 'technician'].includes(user.role)
     },
-    // Only superadmins can delete
+    // Farmers and technicians can delete observations in their farms (plugin filters by tenant)
     delete: ({ req }) => {
       const user = getUser(req)
-      return user?.isSuperAdmin === true
+      if (!user) return false
+      if (user.isSuperAdmin) return true
+      return ['farmer', 'technician'].includes(user.role)
     },
   },
   hooks: {

@@ -1,4 +1,4 @@
-import { ObservationList } from '@/components/dashboard/ObservationList'
+import { PaginatedObservationList } from '@/components/dashboard/PaginatedObservationList'
 import { RiskZone } from '@/components/dashboard/RiskZone'
 import { TrapSelector } from '@/components/dashboard/TrapSelector'
 import { TrendChart } from '@/components/dashboard/TrendChart'
@@ -22,7 +22,7 @@ import { getPayload } from 'payload'
 import { Suspense } from 'react'
 
 interface PageProps {
-  searchParams: Promise<{ trap?: string }>
+  searchParams: Promise<{ trap?: string; page?: string; pageSize?: string }>
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
@@ -108,13 +108,25 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     ? await getObservationsWithRatesForTrap(selectedTrapId, user)
     : await getObservationsWithRatesForFarm(farm.id, user)
 
-  // Filter to last 5 days for display
-  const observations = filterObservationsToLastNDays(allObservations, 5)
+  // Filter to last 90 days (3 months) for chart - chart will auto-trim to actual data range
+  const chartObservations = filterObservationsToLastNDays(allObservations, 90)
 
   // Calculate 3-day average rate for risk assessment
   const averageRate = calculateAverageRateForLastNDays(allObservations, 3)
 
-  const recentObservations = observations.slice(0, 10)
+  // Pagination for observations list
+  const pageSize = Math.min(
+    [10, 20, 50].includes(parseInt(params.pageSize || '10', 10))
+      ? parseInt(params.pageSize || '10', 10)
+      : 10,
+    50,
+  )
+  const currentPage = Math.max(1, parseInt(params.page || '1', 10))
+  const totalObservations = allObservations.length
+  const startIndex = (currentPage - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedObservations = allObservations.slice(startIndex, endIndex)
+  const totalPages = Math.ceil(totalObservations / pageSize)
   const hasTraps = trapsForSelector.length > 0
 
   return (
@@ -174,8 +186,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 </span>
               )}
             </h2>
-            {observations.length > 0 ? (
-              <TrendChart observations={observations} />
+            {chartObservations.length > 0 ? (
+              <TrendChart observations={chartObservations} />
             ) : (
               <div className="text-center py-16 text-gray-500">
                 No observations yet. Add your first observation to see the trend.
@@ -194,12 +206,22 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                   </span>
                 )}
               </h2>
-              {recentObservations.length > 0 && (
-                <span className="text-sm text-gray-500">Last {recentObservations.length} entries</span>
-              )}
             </div>
-            {recentObservations.length > 0 ? (
-              <ObservationList observations={recentObservations} />
+            {totalObservations > 0 ? (
+              <Suspense
+                fallback={
+                  <div className="text-center py-8 text-gray-500">Loading observations...</div>
+                }
+              >
+                <PaginatedObservationList
+                  observations={paginatedObservations}
+                  currentPage={currentPage}
+                  pageSize={pageSize}
+                  totalObservations={totalObservations}
+                  totalPages={totalPages}
+                  selectedTrapId={selectedTrapId}
+                />
+              </Suspense>
             ) : (
               <div className="text-center py-12 text-gray-500">
                 No observations yet.{' '}

@@ -19,12 +19,15 @@
     "seed": "curl -s -X POST http://localhost:3000/api/seed"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.20",
+    "@ai-sdk/react": "^3.0.69",
     "@payloadcms/db-vercel-postgres": "3.74.0",
     "@payloadcms/email-resend": "^3.74.0",
     "@payloadcms/next": "3.74.0",
     "@payloadcms/plugin-multi-tenant": "^3.74.0",
     "@payloadcms/richtext-lexical": "3.74.0",
     "@payloadcms/ui": "3.74.0",
+    "ai": "^6.0.67",
     "cross-env": "^7.0.3",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
@@ -35,7 +38,8 @@
     "react-dom": "19.2.1",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.7.0",
-    "sharp": "0.34.2"
+    "sharp": "0.34.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",

@@ -1,4 +1,4 @@
-import type { Farm, PestObservation, PestType, Trap, User } from '@/payload-types'
+import type { Coop, Farm, PestObservation, PestType, Trap, User } from '@/payload-types'
 import config from '@/payload.config'
 import { getPayload, type Where } from 'payload'
 import {
@@ -394,6 +394,91 @@ export async function getFarms(
     overrideAccess: false,
   })
   return result.docs as Array<Farm & { pestType: PestType }>
+}
+
+// ============ CO-OP FUNCTIONS ============
+
+/**
+ * Get all farms in a co-op.
+ * Uses overrideAccess: true because co-op membership implies permission
+ * to see aggregated data from all member farms.
+ */
+export async function getCoopFarms(
+  coopId: string | number,
+  user: User | null,
+): Promise<Array<Farm & { pestType: PestType }>> {
+  const payload = await getPayload({ config })
+  const result = await payload.find({
+    collection: 'farms',
+    where: { coop: { equals: coopId } },
+    depth: 1,
+    user,
+    overrideAccess: true, // Co-op members can see aggregated data
+  })
+  return result.docs as Array<Farm & { pestType: PestType }>
+}
+
+/**
+ * Get aggregated observations for all farms in a co-op.
+ * Returns observations from all traps across all farms in the co-op.
+ * Uses overrideAccess: true because co-op membership implies permission
+ * to see aggregated metrics from all member farms.
+ */
+export async function getObservationsWithRatesForCoop(
+  coopId: string | number,
+  user: User | null,
+): Promise<ObservationWithRelationsAndRate[]> {
+  const payload = await getPayload({ config })
+
+  // Get all farms in the co-op
+  const farms = await getCoopFarms(coopId, user)
+
+  if (farms.length === 0) {
+    return []
+  }
+
+  const farmIds = farms.map((f) => f.id).filter((id) => id != null)
+
+  if (farmIds.length === 0) {
+    return []
+  }
+
+  // Get all traps for these farms
+  const traps = await payload.find({
+    collection: 'traps',
+    where: {
+      farm: { in: farmIds },
+    },
+    depth: 0,
+    user,
+    overrideAccess: true, // Co-op members can see aggregated data
+  })
+
+  if (traps.docs.length === 0) {
+    return []
+  }
+
+  const trapIds = traps.docs.map((t) => t.id).filter((id) => id != null)
+
+  if (trapIds.length === 0) {
+    return []
+  }
+
+  // Get all observations for these traps
+  const result = await payload.find({
+    collection: 'pest-observations',
+    where: {
+      trap: { in: trapIds },
+    },
+    depth: 3,
+    sort: '-date',
+    limit: 1000,
+    user,
+    overrideAccess: true, // Co-op members can see aggregated data
+  })
+
+  const observations = result.docs as ObservationWithRelations[]
+  return enrichObservationsWithRates(observations)
 }
 
 // ============ PEST TYPE FUNCTIONS ============

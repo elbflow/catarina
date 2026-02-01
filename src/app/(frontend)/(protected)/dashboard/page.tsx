@@ -2,12 +2,14 @@ import { PaginatedObservationList } from '@/components/dashboard/PaginatedObserv
 import { RiskZone } from '@/components/dashboard/RiskZone'
 import { TrapSelector } from '@/components/dashboard/TrapSelector'
 import { TrendChart } from '@/components/dashboard/TrendChart'
+import { ViewToggle } from '@/components/dashboard/ViewToggle'
 import { EmptyState } from '@/components/layout/EmptyState'
 import { getAuthHeaders } from '@/lib/auth-helpers'
 import {
     getFarms,
     getObservationsWithRatesForFarm,
     getObservationsWithRatesForTrap,
+    getObservationsWithRatesForCoop,
     getTrap,
     getTrapRates,
 } from '@/lib/payload-client'
@@ -15,14 +17,14 @@ import {
     calculateAverageRateForLastNDays,
     filterObservationsToLastNDays,
 } from '@/lib/risk-calculator'
-import type { PestType } from '@/payload-types'
+import type { Coop, PestType } from '@/payload-types'
 import config from '@/payload.config'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import { Suspense } from 'react'
 
 interface PageProps {
-  searchParams: Promise<{ trap?: string; page?: string; pageSize?: string }>
+  searchParams: Promise<{ trap?: string; page?: string; pageSize?: string; view?: string }>
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
@@ -70,6 +72,29 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const farm = farms[0]
   const _pestType = farm.pestType as PestType
 
+  // Determine view mode (farm or coop)
+  const viewParam = params.view
+  const selectedView: 'farm' | 'coop' = viewParam === 'coop' ? 'coop' : 'farm'
+
+  // Check if farm has a co-op and get co-op info
+  let coop: Coop | null = null
+  let coopId: number | null = null
+  if (farm.coop) {
+    if (typeof farm.coop === 'object') {
+      coop = farm.coop
+      coopId = coop.id
+    } else {
+      coopId = farm.coop
+      // Fetch co-op details
+      const coopDoc = await payload.findByID({
+        collection: 'coops',
+        id: coopId,
+        depth: 0,
+      })
+      coop = coopDoc as Coop
+    }
+  }
+
   // Get trap info for the trap selector
   const trapRatesData = await getTrapRates(farm.id, user)
   const trapsForSelector = trapRatesData
@@ -103,18 +128,28 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     }
   }
 
-  // Get observations based on selection
-  const allObservations = validTrapSelected && selectedTrapId !== null
+  // Get observations for the list (always farm-specific)
+  const listObservations = validTrapSelected && selectedTrapId !== null
     ? await getObservationsWithRatesForTrap(selectedTrapId, user)
     : await getObservationsWithRatesForFarm(farm.id, user)
 
+  // Get observations for chart and risk zone (farm or co-op based on view)
+  let chartAndRiskObservations: typeof listObservations
+  if (selectedView === 'coop' && coopId !== null) {
+    // Co-op view: use aggregated co-op observations for chart and risk zone
+    chartAndRiskObservations = await getObservationsWithRatesForCoop(coopId, user)
+  } else {
+    // Farm view: use farm observations
+    chartAndRiskObservations = listObservations
+  }
+
   // Filter to last 90 days (3 months) for chart - chart will auto-trim to actual data range
-  const chartObservations = filterObservationsToLastNDays(allObservations, 90)
+  const chartObservations = filterObservationsToLastNDays(chartAndRiskObservations, 90)
 
   // Calculate 3-day average rate for risk assessment
-  const averageRate = calculateAverageRateForLastNDays(allObservations, 3)
+  const averageRate = calculateAverageRateForLastNDays(chartAndRiskObservations, 3)
 
-  // Pagination for observations list
+  // Pagination for observations list (always uses farm-specific observations)
   const pageSize = Math.min(
     [10, 20, 50].includes(parseInt(params.pageSize || '10', 10))
       ? parseInt(params.pageSize || '10', 10)
@@ -122,10 +157,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     50,
   )
   const currentPage = Math.max(1, parseInt(params.page || '1', 10))
-  const totalObservations = allObservations.length
+  const totalObservations = listObservations.length
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const paginatedObservations = allObservations.slice(startIndex, endIndex)
+  const paginatedObservations = listObservations.slice(startIndex, endIndex)
   const totalPages = Math.ceil(totalObservations / pageSize)
   const hasTraps = trapsForSelector.length > 0
 
@@ -143,6 +178,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                   selectedTrapId={selectedTrapId}
                 />
               </Suspense>
+              {coop && (
+                <Suspense fallback={<div className="h-9 w-48 bg-gray-100 rounded-lg animate-pulse" />}>
+                  <ViewToggle
+                    coopName={coop.name}
+                    farmName={farm.name}
+                    selectedView={selectedView}
+                  />
+                </Suspense>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Link href="/observations/new" className="btn-primary">
@@ -173,14 +217,23 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <>
           {/* Risk Zone */}
           <div className="mb-8">
-            <RiskZone averageRate={averageRate} />
+            <RiskZone
+              averageRate={averageRate}
+              isCoopView={selectedView === 'coop'}
+              coopName={coop?.name}
+            />
           </div>
 
           {/* Trend Chart */}
           <div className="card mb-8">
             <h2 className="text-lg font-semibold mb-4">
               Rate Trend
-              {selectedTrapId !== null && (
+              {selectedView === 'coop' && coop && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  (Co-Op Average: {coop.name})
+                </span>
+              )}
+              {selectedView === 'farm' && selectedTrapId !== null && (
                 <span className="ml-2 text-sm font-normal text-gray-500">
                   ({trapsForSelector.find((t) => t.id === selectedTrapId)?.name})
                 </span>

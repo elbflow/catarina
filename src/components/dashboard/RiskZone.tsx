@@ -4,9 +4,11 @@ import { calculateRateRisk } from '@/lib/risk-calculator'
 
 interface RiskZoneProps {
   averageRate: number
+  isCoopView?: boolean
+  coopName?: string
 }
 
-export function RiskZone({ averageRate }: RiskZoneProps) {
+export function RiskZone({ averageRate, isCoopView = false, coopName }: RiskZoneProps) {
   const risk = calculateRateRisk(averageRate)
 
   const getRiskStyles = () => {
@@ -52,7 +54,14 @@ export function RiskZone({ averageRate }: RiskZoneProps) {
         <div className="flex items-center gap-3">
           <span className="text-2xl">{styles.icon}</span>
           <div>
-            <h3 className={`text-lg font-semibold ${styles.text}`}>{styles.label}</h3>
+            <h3 className={`text-lg font-semibold ${styles.text}`}>
+              {styles.label}
+              {isCoopView && coopName && (
+                <span className="ml-2 text-sm font-normal opacity-70">
+                  ({coopName} Average)
+                </span>
+              )}
+            </h3>
             <p className={`text-sm opacity-80 ${styles.text}`}>{risk.actionMessage}</p>
           </div>
         </div>

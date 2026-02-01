@@ -50,7 +50,7 @@ export default function EmailPreviewPage() {
   const riskEmailData = {
     ...sampleRiskData,
     riskLevel,
-    previousRiskLevel: riskLevel === 'warning' ? 'safe' : riskLevel === 'danger' ? 'warning' : null,
+    previousRiskLevel: (riskLevel === 'warning' ? 'safe' : riskLevel === 'danger' ? 'warning' : null) as RiskLevel | null,
   }
 
   const riskEmail = getRiskAlertEmailTemplate(riskEmailData)

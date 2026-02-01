@@ -88,6 +88,20 @@ export const Traps: CollectionConfig = {
         description: 'Inactive traps are excluded from rate calculations',
       },
     },
+    {
+      name: 'currentRiskLevel',
+      type: 'select',
+      options: [
+        { label: 'Safe', value: 'safe' },
+        { label: 'Warning', value: 'warning' },
+        { label: 'Danger', value: 'danger' },
+      ],
+      defaultValue: 'safe',
+      admin: {
+        readOnly: true,
+        description: 'Current risk level based on recent observations (auto-calculated)',
+      },
+    },
   ],
   timestamps: true,
 }

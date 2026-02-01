@@ -1,4 +1,5 @@
 import { anyone, isSuperAdmin } from '@/access'
+import { sendWelcomeEmail } from '@/lib/email-service'
 import type { CollectionConfig } from 'payload'
 
 export const Users: CollectionConfig = {
@@ -25,6 +26,24 @@ export const Users: CollectionConfig = {
     },
     // Only superadmins can delete
     delete: isSuperAdmin,
+  },
+  hooks: {
+    afterChange: [
+      async ({ doc, operation, req }) => {
+        // Only send welcome email on user creation
+        if (operation !== 'create') return doc
+
+        // Skip if user doesn't have an email
+        if (!doc.email) return doc
+
+        // Fire-and-forget: don't await to keep response fast
+        sendWelcomeEmail(req.payload, doc as any).catch((error) => {
+          console.error('Failed to send welcome email:', error)
+        })
+
+        return doc
+      },
+    ],
   },
   fields: [
     {

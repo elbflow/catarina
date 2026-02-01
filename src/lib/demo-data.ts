@@ -49,6 +49,19 @@ export async function flushDatabase() {
   }
   console.log(`Deleted ${memberships.totalDocs} coop memberships`)
 
+  // Delete users BEFORE farms (users have tenants relationship to farms)
+  const users = await payload.find({
+    collection: 'users',
+    limit: 10000,
+  })
+  for (const user of users.docs) {
+    await payload.delete({
+      collection: 'users',
+      id: user.id,
+    })
+  }
+  console.log(`Deleted ${users.totalDocs} users`)
+
   // Delete farms (depends on pest types and coops)
   const farms = await payload.find({
     collection: 'farms',
@@ -87,19 +100,6 @@ export async function flushDatabase() {
     })
   }
   console.log(`Deleted ${pestTypes.totalDocs} pest types`)
-
-  // Delete users
-  const users = await payload.find({
-    collection: 'users',
-    limit: 10000,
-  })
-  for (const user of users.docs) {
-    await payload.delete({
-      collection: 'users',
-      id: user.id,
-    })
-  }
-  console.log(`Deleted ${users.totalDocs} users`)
 
   console.log('Database flushed successfully')
 }
@@ -223,11 +223,11 @@ export async function seedDemoData() {
   const coop = await payload.create({
     collection: 'coops',
     data: {
-      name: 'Yakima Valley Apple Growers',
-      region: 'Yakima Valley, Washington',
+      name: 'Canatlán Growers Co-op',
+      region: 'Canatlán, Durango, Mexico',
     },
   })
-  console.log('Created co-op: Yakima Valley Apple Growers')
+  console.log('Created co-op: Canatlán Growers Co-op')
 
   // ============ PEST TYPE ============
 
@@ -245,58 +245,68 @@ export async function seedDemoData() {
 
   // ============ FARMS ============
 
-  // Farm 1 - Gonzalez Family Orchards (Maria's farm - largest, well-established)
-  const gonzalezFarm = await payload.create({
+  // Farm 1 - North Orchard (Maria's farm - largest, well-established)
+  const northOrchardFarm = await payload.create({
     collection: 'farms',
     data: {
-      name: 'Gonzalez Family Orchards',
+      name: 'North Orchard',
       pestType: codlingMoth.id,
       coop: coop.id,
-      location: 'Tieton, WA',
+      location: 'Canatlán, Durango',
+      lat: 24.0820,
+      lng: -104.7650,
     },
   })
 
-  // Farm 2 - Mitchell Apple Ranch (Tom's farm)
-  const mitchellFarm = await payload.create({
+  // Farm 2 - Valley Farm (Tom's farm)
+  const valleyFarm = await payload.create({
     collection: 'farms',
     data: {
-      name: 'Mitchell Apple Ranch',
+      name: 'Valley Farm',
       pestType: codlingMoth.id,
       coop: coop.id,
-      location: 'Naches, WA',
+      location: 'Canatlán, Durango',
+      lat: 24.0530,
+      lng: -104.7785,
     },
   })
 
-  // Farm 3 - Sunrise Orchards (Sarah's farm)
-  const sunriseFarm = await payload.create({
+  // Farm 3 - South Grove (Sarah's farm)
+  const southGroveFarm = await payload.create({
     collection: 'farms',
     data: {
-      name: 'Sunrise Orchards',
+      name: 'South Grove',
       pestType: codlingMoth.id,
       coop: coop.id,
-      location: 'Selah, WA',
+      location: 'Canatlán, Durango',
+      lat: 24.0180,
+      lng: -104.7890,
     },
   })
 
-  // Farm 4 - Williams Grove (Bob's farm - smaller operation)
-  const williamsFarm = await payload.create({
+  // Farm 4 - East Orchard (Bob's farm - smaller operation)
+  const eastOrchardFarm = await payload.create({
     collection: 'farms',
     data: {
-      name: 'Williams Grove',
+      name: 'East Orchard',
       pestType: codlingMoth.id,
       coop: coop.id,
-      location: 'Zillah, WA',
+      location: 'Canatlán, Durango',
+      lat: 24.0450,
+      lng: -104.7350,
     },
   })
 
-  // Farm 5 - Park's Organic Apples (David's farm - organic certified)
-  const parkFarm = await payload.create({
+  // Farm 5 - West Fields (David's farm - organic certified)
+  const westFieldsFarm = await payload.create({
     collection: 'farms',
     data: {
-      name: "Park's Organic Apples",
+      name: 'West Fields',
       pestType: codlingMoth.id,
       coop: coop.id,
-      location: 'Wapato, WA',
+      location: 'Canatlán, Durango',
+      lat: 24.0600,
+      lng: -104.8200,
     },
   })
 
@@ -304,43 +314,43 @@ export async function seedDemoData() {
 
   // ============ ASSIGN USERS TO FARMS ============
 
-  // Maria owns Gonzalez Family Orchards
+  // Maria owns North Orchard
   await payload.update({
     collection: 'users',
     id: maria.id,
-    data: { tenants: [{ tenant: gonzalezFarm.id }] },
+    data: { tenants: [{ tenant: northOrchardFarm.id }] },
     overrideAccess: true,
   })
 
-  // Tom owns Mitchell Apple Ranch
+  // Tom owns Valley Farm
   await payload.update({
     collection: 'users',
     id: tom.id,
-    data: { tenants: [{ tenant: mitchellFarm.id }] },
+    data: { tenants: [{ tenant: valleyFarm.id }] },
     overrideAccess: true,
   })
 
-  // Sarah owns Sunrise Orchards
+  // Sarah owns South Grove
   await payload.update({
     collection: 'users',
     id: sarah.id,
-    data: { tenants: [{ tenant: sunriseFarm.id }] },
+    data: { tenants: [{ tenant: southGroveFarm.id }] },
     overrideAccess: true,
   })
 
-  // Bob owns Williams Grove
+  // Bob owns East Orchard
   await payload.update({
     collection: 'users',
     id: bob.id,
-    data: { tenants: [{ tenant: williamsFarm.id }] },
+    data: { tenants: [{ tenant: eastOrchardFarm.id }] },
     overrideAccess: true,
   })
 
-  // David owns Park's Organic Apples
+  // David owns West Fields
   await payload.update({
     collection: 'users',
     id: david.id,
-    data: { tenants: [{ tenant: parkFarm.id }] },
+    data: { tenants: [{ tenant: westFieldsFarm.id }] },
     overrideAccess: true,
   })
 
@@ -350,11 +360,11 @@ export async function seedDemoData() {
     id: jennifer.id,
     data: {
       tenants: [
-        { tenant: gonzalezFarm.id },
-        { tenant: mitchellFarm.id },
-        { tenant: sunriseFarm.id },
-        { tenant: williamsFarm.id },
-        { tenant: parkFarm.id },
+        { tenant: northOrchardFarm.id },
+        { tenant: valleyFarm.id },
+        { tenant: southGroveFarm.id },
+        { tenant: eastOrchardFarm.id },
+        { tenant: westFieldsFarm.id },
       ],
     },
     overrideAccess: true,
@@ -401,83 +411,83 @@ export async function seedDemoData() {
 
   // ============ TRAPS ============
 
-  // Gonzalez Family Orchards - 4 traps (largest farm)
-  const gonzalezTraps = [
+  // North Orchard - 4 traps (largest farm)
+  const northOrchardTraps = [
     await payload.create({
       collection: 'traps',
-      data: { name: 'Block A - North', farm: gonzalezFarm.id, tenant: gonzalezFarm.id, isActive: true },
+      data: { name: 'Block A - North', farm: northOrchardFarm.id, tenant: northOrchardFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Block A - South', farm: gonzalezFarm.id, tenant: gonzalezFarm.id, isActive: true },
+      data: { name: 'Block A - South', farm: northOrchardFarm.id, tenant: northOrchardFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Block B - Honeycrisp', farm: gonzalezFarm.id, tenant: gonzalezFarm.id, isActive: true },
+      data: { name: 'Block B - Honeycrisp', farm: northOrchardFarm.id, tenant: northOrchardFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Block C - Gala', farm: gonzalezFarm.id, tenant: gonzalezFarm.id, isActive: true },
-    }),
-  ]
-
-  // Mitchell Apple Ranch - 3 traps
-  const mitchellTraps = [
-    await payload.create({
-      collection: 'traps',
-      data: { name: 'East Orchard', farm: mitchellFarm.id, tenant: mitchellFarm.id, isActive: true },
-    }),
-    await payload.create({
-      collection: 'traps',
-      data: { name: 'West Orchard', farm: mitchellFarm.id, tenant: mitchellFarm.id, isActive: true },
-    }),
-    await payload.create({
-      collection: 'traps',
-      data: { name: 'Young Trees', farm: mitchellFarm.id, tenant: mitchellFarm.id, isActive: true },
+      data: { name: 'Block C - Gala', farm: northOrchardFarm.id, tenant: northOrchardFarm.id, isActive: true },
     }),
   ]
 
-  // Sunrise Orchards - 3 traps
-  const sunriseTraps = [
+  // Valley Farm - 3 traps
+  const valleyFarmTraps = [
     await payload.create({
       collection: 'traps',
-      data: { name: 'Main Field', farm: sunriseFarm.id, tenant: sunriseFarm.id, isActive: true },
+      data: { name: 'East Section', farm: valleyFarm.id, tenant: valleyFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Hillside Plot', farm: sunriseFarm.id, tenant: sunriseFarm.id, isActive: true },
+      data: { name: 'West Section', farm: valleyFarm.id, tenant: valleyFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Border Trap', farm: sunriseFarm.id, tenant: sunriseFarm.id, isActive: true },
-    }),
-  ]
-
-  // Williams Grove - 2 traps (smaller operation)
-  const williamsTraps = [
-    await payload.create({
-      collection: 'traps',
-      data: { name: 'Primary Trap', farm: williamsFarm.id, tenant: williamsFarm.id, isActive: true },
-    }),
-    await payload.create({
-      collection: 'traps',
-      data: { name: 'Secondary Trap', farm: williamsFarm.id, tenant: williamsFarm.id, isActive: true },
+      data: { name: 'Young Trees', farm: valleyFarm.id, tenant: valleyFarm.id, isActive: true },
     }),
   ]
 
-  // Park's Organic Apples - 3 traps
-  const parkTraps = [
+  // South Grove - 3 traps
+  const southGroveTraps = [
     await payload.create({
       collection: 'traps',
-      data: { name: 'Certified Block 1', farm: parkFarm.id, tenant: parkFarm.id, isActive: true },
+      data: { name: 'Main Field', farm: southGroveFarm.id, tenant: southGroveFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Certified Block 2', farm: parkFarm.id, tenant: parkFarm.id, isActive: true },
+      data: { name: 'Hillside Plot', farm: southGroveFarm.id, tenant: southGroveFarm.id, isActive: true },
     }),
     await payload.create({
       collection: 'traps',
-      data: { name: 'Perimeter Monitor', farm: parkFarm.id, tenant: parkFarm.id, isActive: true },
+      data: { name: 'Border Trap', farm: southGroveFarm.id, tenant: southGroveFarm.id, isActive: true },
+    }),
+  ]
+
+  // East Orchard - 2 traps (smaller operation)
+  const eastOrchardTraps = [
+    await payload.create({
+      collection: 'traps',
+      data: { name: 'Primary Trap', farm: eastOrchardFarm.id, tenant: eastOrchardFarm.id, isActive: true },
+    }),
+    await payload.create({
+      collection: 'traps',
+      data: { name: 'Secondary Trap', farm: eastOrchardFarm.id, tenant: eastOrchardFarm.id, isActive: true },
+    }),
+  ]
+
+  // West Fields - 3 traps
+  const westFieldsTraps = [
+    await payload.create({
+      collection: 'traps',
+      data: { name: 'Certified Block 1', farm: westFieldsFarm.id, tenant: westFieldsFarm.id, isActive: true },
+    }),
+    await payload.create({
+      collection: 'traps',
+      data: { name: 'Certified Block 2', farm: westFieldsFarm.id, tenant: westFieldsFarm.id, isActive: true },
+    }),
+    await payload.create({
+      collection: 'traps',
+      data: { name: 'Perimeter Monitor', farm: westFieldsFarm.id, tenant: westFieldsFarm.id, isActive: true },
     }),
   ]
 
@@ -542,11 +552,11 @@ export async function seedDemoData() {
     }
   }
 
-  // ========== GONZALEZ FAMILY ORCHARDS ==========
+  // ========== NORTH ORCHARD ==========
   // Well-managed farm, currently in WARNING zone but controlled
 
   // Block A - North: Moderate activity, stable
-  await createObservations(gonzalezTraps[0].id, gonzalezFarm.id, [
+  await createObservations(northOrchardTraps[0].id, northOrchardFarm.id, [
     { daysAgo: 42, count: 1 },
     { daysAgo: 39, count: 2 },
     { daysAgo: 36, count: 2 },
@@ -565,7 +575,7 @@ export async function seedDemoData() {
   ])
 
   // Block A - South: Lower activity (good airflow area)
-  await createObservations(gonzalezTraps[1].id, gonzalezFarm.id, [
+  await createObservations(northOrchardTraps[1].id, northOrchardFarm.id, [
     { daysAgo: 42, count: 0 },
     { daysAgo: 39, count: 1 },
     { daysAgo: 36, count: 1 },
@@ -584,7 +594,7 @@ export async function seedDemoData() {
   ])
 
   // Block B - Honeycrisp: Higher activity (variety attracts more moths)
-  await createObservations(gonzalezTraps[2].id, gonzalezFarm.id, [
+  await createObservations(northOrchardTraps[2].id, northOrchardFarm.id, [
     { daysAgo: 42, count: 2 },
     { daysAgo: 39, count: 3 },
     { daysAgo: 36, count: 4 },
@@ -603,7 +613,7 @@ export async function seedDemoData() {
   ])
 
   // Block C - Gala: Moderate, steady
-  await createObservations(gonzalezTraps[3].id, gonzalezFarm.id, [
+  await createObservations(northOrchardTraps[3].id, northOrchardFarm.id, [
     { daysAgo: 42, count: 1 },
     { daysAgo: 39, count: 2 },
     { daysAgo: 36, count: 2 },
@@ -621,11 +631,11 @@ export async function seedDemoData() {
     { daysAgo: 0, count: 2 },
   ])
 
-  // ========== MITCHELL APPLE RANCH ==========
+  // ========== VALLEY FARM ==========
   // Currently in DANGER zone - needs immediate action
 
-  // East Orchard: Very high activity - hotspot
-  await createObservations(mitchellTraps[0].id, mitchellFarm.id, [
+  // East Section: Very high activity - hotspot
+  await createObservations(valleyFarmTraps[0].id, valleyFarm.id, [
     { daysAgo: 41, count: 2 },
     { daysAgo: 38, count: 3 },
     { daysAgo: 35, count: 4 },
@@ -643,8 +653,8 @@ export async function seedDemoData() {
     { daysAgo: 0, count: 9, notes: 'Still very high - action required' },
   ])
 
-  // West Orchard: High but not as severe
-  await createObservations(mitchellTraps[1].id, mitchellFarm.id, [
+  // West Section: High but not as severe
+  await createObservations(valleyFarmTraps[1].id, valleyFarm.id, [
     { daysAgo: 41, count: 1 },
     { daysAgo: 38, count: 2 },
     { daysAgo: 35, count: 3 },
@@ -663,7 +673,7 @@ export async function seedDemoData() {
   ])
 
   // Young Trees: Moderate (less established)
-  await createObservations(mitchellTraps[2].id, mitchellFarm.id, [
+  await createObservations(valleyFarmTraps[2].id, valleyFarm.id, [
     { daysAgo: 41, count: 1 },
     { daysAgo: 38, count: 1 },
     { daysAgo: 35, count: 2 },
@@ -681,11 +691,11 @@ export async function seedDemoData() {
     { daysAgo: 0, count: 5 },
   ])
 
-  // ========== SUNRISE ORCHARDS ==========
+  // ========== SOUTH GROVE ==========
   // Currently in SAFE zone - excellent pest management
 
   // Main Field: Low, stable activity
-  await createObservations(sunriseTraps[0].id, sunriseFarm.id, [
+  await createObservations(southGroveTraps[0].id, southGroveFarm.id, [
     { daysAgo: 40, count: 1 },
     { daysAgo: 37, count: 1 },
     { daysAgo: 34, count: 2 },
@@ -703,7 +713,7 @@ export async function seedDemoData() {
   ])
 
   // Hillside Plot: Very low
-  await createObservations(sunriseTraps[1].id, sunriseFarm.id, [
+  await createObservations(southGroveTraps[1].id, southGroveFarm.id, [
     { daysAgo: 40, count: 0 },
     { daysAgo: 37, count: 1 },
     { daysAgo: 34, count: 1 },
@@ -721,7 +731,7 @@ export async function seedDemoData() {
   ])
 
   // Border Trap: Slightly higher (edge effect from neighboring property)
-  await createObservations(sunriseTraps[2].id, sunriseFarm.id, [
+  await createObservations(southGroveTraps[2].id, southGroveFarm.id, [
     { daysAgo: 40, count: 1 },
     { daysAgo: 37, count: 2 },
     { daysAgo: 34, count: 2 },
@@ -738,11 +748,11 @@ export async function seedDemoData() {
     { daysAgo: 1, count: 3, notes: 'Edge effect - monitoring closely' },
   ])
 
-  // ========== WILLIAMS GROVE ==========
+  // ========== EAST ORCHARD ==========
   // Currently in WARNING zone - trending upward, needs attention
 
   // Primary Trap: Moderate, increasing trend
-  await createObservations(williamsTraps[0].id, williamsFarm.id, [
+  await createObservations(eastOrchardTraps[0].id, eastOrchardFarm.id, [
     { daysAgo: 39, count: 1 },
     { daysAgo: 36, count: 1 },
     { daysAgo: 33, count: 2 },
@@ -760,7 +770,7 @@ export async function seedDemoData() {
   ])
 
   // Secondary Trap: Similar pattern
-  await createObservations(williamsTraps[1].id, williamsFarm.id, [
+  await createObservations(eastOrchardTraps[1].id, eastOrchardFarm.id, [
     { daysAgo: 39, count: 0 },
     { daysAgo: 36, count: 1 },
     { daysAgo: 33, count: 1 },
@@ -777,11 +787,11 @@ export async function seedDemoData() {
     { daysAgo: 0, count: 5 },
   ])
 
-  // ========== PARK'S ORGANIC APPLES ==========
+  // ========== WEST FIELDS ==========
   // Mixed results - organic management challenges
 
   // Certified Block 1: Moderate activity (organic methods take longer)
-  await createObservations(parkTraps[0].id, parkFarm.id, [
+  await createObservations(westFieldsTraps[0].id, westFieldsFarm.id, [
     { daysAgo: 42, count: 2 },
     { daysAgo: 39, count: 2 },
     { daysAgo: 36, count: 3 },
@@ -800,7 +810,7 @@ export async function seedDemoData() {
   ])
 
   // Certified Block 2: Better results
-  await createObservations(parkTraps[1].id, parkFarm.id, [
+  await createObservations(westFieldsTraps[1].id, westFieldsFarm.id, [
     { daysAgo: 42, count: 1 },
     { daysAgo: 39, count: 2 },
     { daysAgo: 36, count: 2 },
@@ -819,7 +829,7 @@ export async function seedDemoData() {
   ])
 
   // Perimeter Monitor: Higher (catching migrants from conventional farms)
-  await createObservations(parkTraps[2].id, parkFarm.id, [
+  await createObservations(westFieldsTraps[2].id, westFieldsFarm.id, [
     { daysAgo: 42, count: 3 },
     { daysAgo: 39, count: 4 },
     { daysAgo: 36, count: 4 },
@@ -844,33 +854,33 @@ export async function seedDemoData() {
 DEMO DATA SEEDED SUCCESSFULLY
 ================================================================================
 
-CO-OP: Yakima Valley Apple Growers
-REGION: Yakima Valley, Washington
+CO-OP: Canatlán Growers Co-op
+REGION: Canatlán, Durango, Mexico
 CROP: Apple
 PEST: Codling Moth (threshold: 2 moths/day)
 
 DEMO ACCOUNTS:
 -----------------------------------------------------------------
-| Email                        | Password     | Role       | Farm                    |
+| Email                        | Password     | Role       | Farm          |
 -----------------------------------------------------------------
-| admin@elbflow.com            | catarina2026! | Superadmin | All access              |
-| maria.gonzalez@demo.com      | demo1234!    | Farmer     | Gonzalez Family Orchards |
-| tom.mitchell@demo.com        | demo1234!    | Farmer     | Mitchell Apple Ranch     |
-| sarah.chen@demo.com          | demo1234!    | Farmer     | Sunrise Orchards        |
-| bob.williams@demo.com        | demo1234!    | Farmer     | Williams Grove          |
-| david.park@demo.com          | demo1234!    | Farmer     | Park's Organic Apples   |
-| jennifer.marks@demo.com      | demo1234!    | Technician | All 5 farms             |
+| admin@elbflow.com            | catarina2026! | Superadmin | All access    |
+| maria.gonzalez@demo.com      | demo1234!    | Farmer     | North Orchard |
+| tom.mitchell@demo.com        | demo1234!    | Farmer     | Valley Farm   |
+| sarah.chen@demo.com          | demo1234!    | Farmer     | South Grove   |
+| bob.williams@demo.com        | demo1234!    | Farmer     | East Orchard  |
+| david.park@demo.com          | demo1234!    | Farmer     | West Fields   |
+| jennifer.marks@demo.com      | demo1234!    | Technician | All 5 farms   |
 -----------------------------------------------------------------
 
 FARM STATUS (Mid-Season Snapshot):
 -----------------------------------------------------------------
-| Farm                     | Traps | Risk Level | Notes                          |
+| Farm          | Traps | Risk Level | Notes                          |
 -----------------------------------------------------------------
-| Gonzalez Family Orchards | 4     | WARNING    | Well-managed, stable           |
-| Mitchell Apple Ranch     | 3     | DANGER     | Needs immediate action         |
-| Sunrise Orchards         | 3     | SAFE       | Excellent pest management      |
-| Williams Grove           | 2     | WARNING    | Trending upward               |
-| Park's Organic Apples    | 3     | WARNING    | Organic challenges, improving  |
+| North Orchard | 4     | WARNING    | Well-managed, stable           |
+| Valley Farm   | 3     | DANGER     | Needs immediate action         |
+| South Grove   | 3     | SAFE       | Excellent pest management      |
+| East Orchard  | 2     | WARNING    | Trending upward               |
+| West Fields   | 3     | WARNING    | Organic challenges, improving  |
 -----------------------------------------------------------------
 
 Total: 5 farms, 15 traps, ~210 observations over 6 weeks

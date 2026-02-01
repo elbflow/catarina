@@ -47,26 +47,36 @@ export function BenefitsSection() {
   ]
 
   return (
-    <section className="py-12 sm:py-20 px-4 sm:px-6 bg-white">
+    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-3 sm:mb-4 text-gray-900">
+        {/* Section Eyebrow */}
+        <div className="text-center mb-3">
+          <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+            Key Benefits
+          </span>
+        </div>
+        
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-5 sm:mb-6 text-gray-900">
           Why Catarina Works
         </h2>
-        <p className="text-base sm:text-lg text-gray-600 text-center mb-10 sm:mb-16 max-w-2xl mx-auto">
+        <p className="text-lg sm:text-xl text-gray-600 text-center mb-12 sm:mb-16 max-w-2xl mx-auto leading-relaxed">
           Everything you need to make timely, sustainable pest control decisions
         </p>
         
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
           {benefits.map((benefit, index) => (
-            <div key={index} className="card p-6 flex gap-4">
-              <div className={`${benefit.bgColor} ${benefit.color} p-3 rounded-lg flex-shrink-0 w-14 h-14 flex items-center justify-center`}>
+            <div 
+              key={index} 
+              className="card p-6 sm:p-8 flex gap-4 sm:gap-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default"
+            >
+              <div className={`${benefit.bgColor} ${benefit.color} p-3 sm:p-4 rounded-lg flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shadow-sm`}>
                 {benefit.icon}
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-gray-900">
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-gray-900">
                   {benefit.title}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 leading-relaxed">
                   {benefit.description}
                 </p>
               </div>

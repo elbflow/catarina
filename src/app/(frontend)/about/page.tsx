@@ -13,12 +13,16 @@ export default function AboutPage() {
       <LandingNav />
       <main className="flex-grow">
         {/* Hero */}
-        <section className="py-12 sm:py-16 px-4 sm:px-6 bg-gradient-to-br from-green-50 to-blue-50">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-gray-900">
+        <section className="py-12 sm:py-16 px-4 sm:px-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+          {/* Decorative blur blobs */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-green-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-white">
               Why We Built Catarina
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
               We help growers stop missing the narrow windows where sustainable pest control actually works.
             </p>
           </div>
@@ -55,23 +59,27 @@ export default function AboutPage() {
         </section>
 
         {/* Our Mission */}
-        <section className="py-12 sm:py-20 px-4 sm:px-6 bg-gray-50">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-gray-900">
+        <section className="py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+          {/* Decorative blur blobs */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-green-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="max-w-4xl mx-auto relative z-10">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-white">
               Our Mission
             </h2>
-            <div className="prose prose-lg max-w-none text-gray-600 space-y-4">
+            <div className="prose prose-lg max-w-none text-gray-300 space-y-4">
               <p>
                 We believe sustainable agriculture is possible—when growers have the right information at the right time. Our mission is to turn scattered field observations into confident, timely decisions.
               </p>
               <p>
                 Catarina helps growers understand what&apos;s happening in their fields and what&apos;s likely coming next, so they can plan the right action at the right time. By turning simple field observations and local conditions into clear risk signals and reminders, we help farmers coordinate, act earlier, and stay sustainable—without requiring them to become pest-modeling experts.
               </p>
-              <div className="bg-green-50 border-l-4 border-green-500 p-6 my-8">
-                <p className="text-gray-800 font-medium mb-2">
+              <div className="bg-green-500/20 border-l-4 border-green-500 p-6 my-8 rounded-r-lg backdrop-blur-sm">
+                <p className="text-white font-medium mb-2">
                   The broader impact:
                 </p>
-                <ul className="list-disc list-inside space-y-2 text-gray-700">
+                <ul className="list-disc list-inside space-y-2 text-gray-200">
                   <li>More growers can maintain organic certification</li>
                   <li>Reduced pesticide use protects soil health and biodiversity</li>
                   <li>Better crop yields mean more sustainable livelihoods</li>
@@ -126,15 +134,19 @@ export default function AboutPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-br from-green-50 to-blue-50">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-gray-900">
+        <section className="py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-white">
               Ready to try it?
             </h2>
-            <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Start monitoring today and see how Catarina can help you catch the intervention window every time.
             </p>
-            <Link href="/signup" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-2.5 sm:py-3 inline-block">
+            <Link href="/signup" className="bg-blue-600 hover:bg-blue-700 text-white text-base sm:text-lg px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105 inline-block">
               Get Started Free
             </Link>
           </div>
